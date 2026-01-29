@@ -7,6 +7,9 @@
  */
 
 import { Config, StorageKeys } from './config.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('StateManager');
 
 /**
  * État interne de l'application
@@ -103,7 +106,7 @@ export const StateManager = {
                 try {
                     callback(value, oldValue);
                 } catch (error) {
-                    console.error(`Observer error for "${key}":`, error);
+                    logger.error(`Observer error for "${key}"`, error);
                 }
             });
         }

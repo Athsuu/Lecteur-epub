@@ -12,6 +12,9 @@
  */
 
 import { DatabaseManager } from '../core/database.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('Favorites');
 
 /**
  * FavoritesManager - Gestionnaire des favoris (couche données)
@@ -29,7 +32,7 @@ export const FavoritesManager = {
         try {
             const book = await DatabaseManager.get(id);
             if (!book) {
-                console.warn(`[Favorites] Book ${id} not found`);
+                logger.warn(`[Favorites] Book ${id} not found`);
                 return { success: false, isFavorite: false };
             }
             
@@ -47,12 +50,12 @@ export const FavoritesManager = {
             await DatabaseManager.update(id, book);
             
             const newStatus = !isFavorite;
-            console.log(`${newStatus ? '⭐' : '☆'} ${book.title}`);
+            logger.info(`${newStatus ? '⭐' : '☆'} ${book.title}`, { id, title: book?.title });
             
             return { success: true, isFavorite: newStatus };
             
         } catch (error) {
-            console.error('[Favorites] Toggle failed:', error);
+            logger.error('[Favorites] Toggle failed', error);
             return { success: false, isFavorite: false };
         }
     },
@@ -67,7 +70,7 @@ export const FavoritesManager = {
         try {
             return await DatabaseManager.getFavorites();
         } catch (error) {
-            console.error('[Favorites] GetAll failed:', error);
+            logger.error('[Favorites] GetAll failed', error);
             return [];
         }
     },
@@ -82,7 +85,7 @@ export const FavoritesManager = {
         try {
             return await DatabaseManager.countFavorites();
         } catch (error) {
-            console.error('[Favorites] Count failed:', error);
+            logger.error('[Favorites] Count failed', error);
             return 0;
         }
     },

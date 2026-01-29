@@ -14,9 +14,12 @@ import { LibraryManager } from '../library/library-manager.js';
 import { EventManager } from '../events/event-manager.js';
 import { SettingsManager } from '../ui/settings-manager.js';
 import { StatsUI } from '../ui/stats-ui.js';
+import Logger from '../utils/logger.js';
 
 // Instance du composant de statistiques (singleton côté UI)
 const statsUI = new StatsUI({});
+
+const logger = new Logger('App');
 
 /**
  * Application principale
@@ -29,7 +32,7 @@ const App = {
      */
     async init() {
         try {
-            console.log('🚀 Starting EPUB Reader...');
+            logger.info('Starting EPUB Reader...');
             
             // 1. Initialiser l'interface utilisateur (cache DOM)
             UIManager.init();
@@ -60,11 +63,10 @@ const App = {
             
             // 10. Afficher le message de bienvenue
             UIManager.showStatus('📚 Bibliothèque prête');
-            
-            console.log('✅ EPUB Reader initialized successfully');
+            logger.info('EPUB Reader initialized successfully');
             
         } catch (error) {
-            console.error('❌ Application initialization failed:', error);
+            logger.error('Application initialization failed', error);
             UIManager.showStatus('Erreur d\'initialisation');
         }
     },
@@ -79,7 +81,7 @@ const App = {
                     scope: './'
                 });
                 
-                console.log('📦 Service Worker registered:', registration.scope);
+                logger.info('Service Worker registered:', registration.scope);
                 
                 // Écouter les mises à jour
                 registration.addEventListener('updatefound', () => {
@@ -90,10 +92,10 @@ const App = {
                             UIManager.showStatus('🔄 Mise à jour disponible - Rechargez la page');
                         }
                     });
-                });
+                    });
                 
             } catch (error) {
-                console.warn('⚠️ Service Worker registration failed:', error);
+                logger.warn('Service Worker registration failed', error);
             }
         }
     }

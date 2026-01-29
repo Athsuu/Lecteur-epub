@@ -8,11 +8,27 @@
 
 // Import de JSZip depuis CDN (jsDelivr - version stable 3.10.1)
 // Utilisation d'un CDN pour éviter de gérer des fichiers locaux
+// Minimal Logger shim for worker context (no module imports)
+const LoggerShim = (moduleName = 'Worker') => {
+    const now = () => {
+        const d = new Date();
+        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}.${String(d.getMilliseconds()).padStart(3,'0')}`;
+    };
+    return {
+        info: (msg, ...d) => console.info(`[%c${now()}%c] [%c${moduleName}%c] ℹ️ ${msg}`, 'color:#17a2b8', '', 'color:#17a2b8;font-weight:700', '', ...d),
+        warn: (msg, ...d) => console.warn(`[%c${now()}%c] [%c${moduleName}%c] ⚠️ ${msg}`, 'color:#d97706', '', 'color:#d97706;font-weight:700', '', ...d),
+        error: (msg, err) => console.error(`[%c${now()}%c] [%c${moduleName}%c] ❌ ${msg}`, 'color:#dc2626', '', 'color:#dc2626;font-weight:700', '', err),
+        debug: (msg, ...d) => console.log(`[%c${now()}%c] [%c${moduleName}%c] 🔧 ${msg}`, 'color:#6c757d', '', 'color:#6c757d;font-weight:700', '', ...d)
+    };
+};
+
+const logger = LoggerShim('EpubWorker');
+
 try {
     importScripts('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
 } catch (error) {
     // Fallback en cas d'échec de chargement depuis le CDN
-    console.error('Failed to load JSZip from CDN:', error);
+    logger.error('Failed to load JSZip from CDN:', error);
     self.postMessage({
         type: 'error',
         error: 'Failed to load JSZip library. Check internet connection.'
@@ -86,7 +102,7 @@ function extractMetadata(xmlContent) {
         }
         
     } catch (error) {
-        console.error('Metadata extraction failed:', error);
+        logger.error('Metadata extraction failed:', error);
     }
     
     return metadata;
@@ -122,7 +138,7 @@ async function findOpfPath(zip) {
         // Lire le container.xml (standard EPUB)
         const containerFile = zip.file('META-INF/container.xml');
         if (!containerFile) {
-            console.warn('META-INF/container.xml not found');
+            logger.warn('META-INF/container.xml not found');
             return null;
         }
         
@@ -136,7 +152,7 @@ async function findOpfPath(zip) {
         
         return null;
     } catch (error) {
-        console.error('Error finding OPF path:', error);
+        logger.error('Error finding OPF path:', error);
         return null;
     }
 }
@@ -169,7 +185,7 @@ function findCoverId(opfContent) {
         
         return null;
     } catch (error) {
-        console.error('Error finding cover ID:', error);
+        logger.error('Error finding cover ID:', error);
         return null;
     }
 }
@@ -204,7 +220,7 @@ function findItemHref(opfContent, itemId) {
         
         return null;
     } catch (error) {
-        console.error('Error finding item href:', error);
+        logger.error('Error finding item href:', error);
         return null;
     }
 }
@@ -222,14 +238,14 @@ async function extractCoverBlob(zip, opfPath, opfContent) {
         // Trouver l'ID de la couverture
         const coverId = findCoverId(opfContent);
         if (!coverId) {
-            console.warn('Cover ID not found in OPF');
+            logger.warn('Cover ID not found in OPF');
             return null;
         }
         
         // Trouver le href de cet item
         const coverHref = findItemHref(opfContent, coverId);
         if (!coverHref) {
-            console.warn('Cover href not found for ID:', coverId);
+            logger.warn('Cover href not found for ID:', coverId);
             return null;
         }
         
@@ -240,7 +256,7 @@ async function extractCoverBlob(zip, opfPath, opfContent) {
         // Récupérer le fichier dans le ZIP
         const coverFile = zip.file(coverPath);
         if (!coverFile) {
-            console.warn('Cover file not found at path:', coverPath);
+            logger.warn('Cover file not found at path:', coverPath);
             return null;
         }
         
@@ -249,7 +265,7 @@ async function extractCoverBlob(zip, opfPath, opfContent) {
         return coverBlob;
         
     } catch (error) {
-        console.error('Error extracting cover blob:', error);
+        logger.error('Error extracting cover blob:', error);
         return null;
     }
 }
@@ -292,7 +308,7 @@ async function parseEpub(epubBlob, fileId) {
         };
         
     } catch (error) {
-        console.error('EPUB parsing error:', error);
+        logger.error('EPUB parsing error:', error);
         throw error;
     }
 }

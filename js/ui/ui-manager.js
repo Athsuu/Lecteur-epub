@@ -9,6 +9,9 @@
 import { Config } from '../core/config.js';
 import { EventBus } from '../events/event-bus.js';
 import UIFactory, { isMobile, isDesktop, getMode, createUI, getUI } from './ui-factory.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('UIManager');
 
 /**
  * Cache des éléments DOM fréquemment utilisés
@@ -54,7 +57,7 @@ function cacheElements() {
     elementIds.forEach(id => {
         elements[id] = document.getElementById(id);
         if (!elements[id]) {
-            console.warn(`Element not found: #${id}`);
+            logger.warn(`Element not found: #${id}`);
         }
     });
 }
@@ -109,10 +112,10 @@ export const UIManager = {
         // Écouter les changements de mode
         document.addEventListener('ui:mode-changed', (e) => {
             currentUIInstance = e.detail.ui;
-            console.log(`🔄 UI instance switched to: ${currentUIInstance.name}`);
+            logger.info(`UI instance switched to: ${currentUIInstance.name}`);
         });
         
-        console.log(`🖥️ UI Manager initialized (${getMode()} mode)`);
+        logger.info(`UI Manager initialized (${getMode()} mode)`);
     },
     
     /**
@@ -157,7 +160,7 @@ export const UIManager = {
         
         // Log pour débugger
         const isHidden = document.body.classList.contains('ui-hidden');
-        console.log(`Interface ${isHidden ? 'hidden' : 'visible'}`);
+        logger.info(`Interface ${isHidden ? 'hidden' : 'visible'}`);
     },
     
     // ═══════════════════════════════════════════════════════════════════════

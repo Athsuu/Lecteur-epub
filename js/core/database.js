@@ -7,6 +7,9 @@
  */
 
 import { Config } from './config.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('Database');
 
 /**
  * Instance de la base de données
@@ -71,13 +74,13 @@ export const DatabaseManager = {
                 
                 request.onerror = () => {
                     const error = new Error('Failed to open IndexedDB database');
-                    console.error(error);
+                    logger.error('IndexedDB open failed', error);
                     reject(error);
                 };
                 
                 request.onsuccess = () => {
                     db = request.result;
-                    console.log('📚 Database initialized successfully (version ' + db.version + ')');
+                    logger.info('Database initialized successfully (version ' + db.version + ')', { version: db.version });
                     resolve(db);
                 };
                 
@@ -98,7 +101,7 @@ export const DatabaseManager = {
                             store.createIndex('author', 'author', { unique: false });
                             store.createIndex('timestamp', 'timestamp', { unique: false });
                             
-                            console.log('📦 Object store created with indexes');
+                            logger.info('Object store created with indexes');
                         }
                     }
                     
@@ -110,7 +113,7 @@ export const DatabaseManager = {
                         // Créer l'index s'il n'existe pas déjà
                         if (!store.indexNames.contains('isFavorite')) {
                             store.createIndex('isFavorite', 'isFavorite', { unique: false });
-                            console.log('⭐ Index isFavorite created');
+                            logger.info('Index isFavorite created');
                         }
                         
                         // Initialiser isFavorite à false pour les livres existants
@@ -123,7 +126,7 @@ export const DatabaseManager = {
                                     store.put(book);
                                 }
                             });
-                            console.log(`🔄 Migrated ${books.length} books to V2`);
+                            logger.info(`Migrated ${books.length} books to V2`);
                         };
                     }
                     
@@ -135,7 +138,7 @@ export const DatabaseManager = {
                         // Créer l'index favoritedAt s'il n'existe pas
                         if (!store.indexNames.contains('favoritedAt')) {
                             store.createIndex('favoritedAt', 'favoritedAt', { unique: false });
-                            console.log('⭐ Index favoritedAt created');
+                            logger.info('Index favoritedAt created');
                         }
                         
                         // Migrer isFavorite (bool) vers favoritedAt (timestamp)
@@ -151,7 +154,7 @@ export const DatabaseManager = {
                                     store.put(book);
                                 }
                             });
-                            console.log(`🔄 Migrated ${books.length} books to V3 (favoritedAt)`);
+                            logger.info(`Migrated ${books.length} books to V3 (favoritedAt)`);
                         };
                     }
                     
@@ -166,13 +169,13 @@ export const DatabaseManager = {
                             statsStore.createIndex('totalSeconds', 'totalSeconds', { unique: false });
                             statsStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
                             
-                            console.log('📊 Statistics store created');
+                            logger.info('Statistics store created');
                         }
                     }
                 };
             });
-        } catch (error) {
-            console.error('Database initialization failed:', error);
+                } catch (error) {
+            logger.error('Database initialization failed', error);
             throw error;
         }
     },
@@ -185,10 +188,10 @@ export const DatabaseManager = {
     async add(data) {
         try {
             const id = await promisify(getStore('readwrite').add(data));
-            console.log(`📖 Book added with ID: ${id}`);
+            logger.info(`Book added with ID: ${id}`, { id });
             return id;
         } catch (error) {
-            console.error('Failed to add book:', error);
+            logger.error('Failed to add book', error);
             throw error;
         }
     },
@@ -202,7 +205,7 @@ export const DatabaseManager = {
         try {
             return await promisify(getStore('readonly').get(id));
         } catch (error) {
-            console.error(`Failed to get book ${id}:`, error);
+            logger.error(`Failed to get book ${id}`, error);
             throw error;
         }
     },
@@ -217,7 +220,7 @@ export const DatabaseManager = {
             const book = await this.get(id);
             return book?.coverUrl || null;
         } catch (error) {
-            console.error(`Failed to get cover for book ${id}:`, error);
+            logger.error(`Failed to get cover for book ${id}`, error);
             return null;
         }
     },
@@ -232,7 +235,7 @@ export const DatabaseManager = {
             const books = await this.getAll();
             return books.map(stripHeavyData);
         } catch (error) {
-            console.error('Failed to get all metadata:', error);
+            logger.error('Failed to get all metadata', error);
             throw error;
         }
     },
@@ -247,7 +250,7 @@ export const DatabaseManager = {
             // Trier par date d'ajout (plus récent en premier)
             return books.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         } catch (error) {
-            console.error('Failed to get all books:', error);
+            logger.error('Failed to get all books', error);
             throw error;
         }
     },
@@ -300,14 +303,14 @@ export const DatabaseManager = {
             }
             
             // Fallback pour les anciennes versions (V2 avec isFavorite)
-            console.warn('[DB] Using fallback for favorites (manual filter)');
+            logger.warn('Using fallback for favorites (manual filter)');
             const allBooks = await this.getAll();
             return allBooks.filter(book => 
                 book.favoritedAt !== null && book.favoritedAt !== undefined
             ).sort((a, b) => (b.favoritedAt || 0) - (a.favoritedAt || 0));
             
         } catch (error) {
-            console.error('Failed to get favorites:', error);
+            logger.error('Failed to get favorites', error);
             // Dernier fallback
             try {
                 const allBooks = await this.getAll();
@@ -316,7 +319,7 @@ export const DatabaseManager = {
                     (book.favoritedAt !== null && book.favoritedAt !== undefined)
                 );
             } catch (fallbackError) {
-                console.error('Fallback failed:', fallbackError);
+                logger.error('Fallback failed', fallbackError);
                 return [];
             }
         }
@@ -332,7 +335,7 @@ export const DatabaseManager = {
             const favorites = await this.getFavorites();
             return favorites.length;
         } catch (error) {
-            console.error('Failed to count favorites:', error);
+            logger.error('Failed to count favorites:', error);
             return 0;
         }
     },    
@@ -344,9 +347,9 @@ export const DatabaseManager = {
     async delete(id) {
         try {
             await promisify(getStore('readwrite').delete(id));
-            console.log(`🗑️ Book ${id} deleted`);
+            logger.info(`🗑️ Book ${id} deleted`);
         } catch (error) {
-            console.error(`Failed to delete book ${id}:`, error);
+            logger.error(`Failed to delete book ${id}:`, error);
             throw error;
         }
     },
@@ -368,9 +371,9 @@ export const DatabaseManager = {
             const updatedBook = { ...book, ...updates };
             await promisify(getStore('readwrite').put(updatedBook));
             
-            console.log(`📝 Book ${id} updated`);
+            logger.info(`📝 Book ${id} updated`);
         } catch (error) {
-            console.error(`Failed to update book ${id}:`, error);
+            logger.error(`Failed to update book ${id}:`, error);
             throw error;
         }
     },
@@ -390,7 +393,7 @@ export const DatabaseManager = {
                 lastRead: Date.now()
             });
         } catch (error) {
-            console.error(`Failed to save progress for book ${id}:`, error);
+            logger.error(`Failed to save progress for book ${id}:`, error);
             // Ne pas propager l'erreur pour ne pas interrompre la lecture
         }
     },
@@ -403,7 +406,7 @@ export const DatabaseManager = {
         try {
             return await promisify(getStore('readonly').count());
         } catch (error) {
-            console.error('Failed to count books:', error);
+            logger.error('Failed to count books:', error);
             return 0;
         }
     },
@@ -433,7 +436,7 @@ export const DatabaseManager = {
             const store = transaction.objectStore(Config.STATS_STORE_NAME);
             return await promisify(store.get(bookId));
         } catch (error) {
-            console.error(`Failed to get statistics for book ${bookId}:`, error);
+            logger.error(`Failed to get statistics for book ${bookId}:`, error);
             return null;
         }
     },
@@ -458,9 +461,9 @@ export const DatabaseManager = {
             const store = transaction.objectStore(Config.STATS_STORE_NAME);
             await promisify(store.put(statsData));
             
-            console.log(`📊 Statistics saved for book ${bookId}`);
+            logger.info(`📊 Statistics saved for book ${bookId}`);
         } catch (error) {
-            console.error(`Failed to save statistics for book ${bookId}:`, error);
+            logger.error(`Failed to save statistics for book ${bookId}:`, error);
             throw error;
         }
     },
@@ -477,7 +480,7 @@ export const DatabaseManager = {
             const store = transaction.objectStore(Config.STATS_STORE_NAME);
             return await promisify(store.getAll());
         } catch (error) {
-            console.error('Failed to get all statistics:', error);
+            logger.error('Failed to get all statistics:', error);
             return [];
         }
     },
@@ -495,9 +498,9 @@ export const DatabaseManager = {
             const store = transaction.objectStore(Config.STATS_STORE_NAME);
             await promisify(store.delete(bookId));
             
-            console.log(`🗑️ Statistics deleted for book ${bookId}`);
+            logger.info(`🗑️ Statistics deleted for book ${bookId}`);
         } catch (error) {
-            console.error(`Failed to delete statistics for book ${bookId}:`, error);
+            logger.error(`Failed to delete statistics for book ${bookId}:`, error);
             // Ne pas propager l'erreur
         }
     }

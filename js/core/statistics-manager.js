@@ -8,6 +8,9 @@
 
 import { DatabaseManager } from './database.js';
 import { EventBus, Events } from '../events/event-bus.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('Statistics');
 
 /**
  * Configuration des constantes
@@ -38,7 +41,7 @@ export const StatisticsManager = {
      * Configure les listeners d'événements
      */
     init() {
-        console.log('📊 StatisticsManager initialized');
+        logger.info('StatisticsManager initialized');
         
         // Écouter l'ouverture/fermeture de livres
         EventBus.on(Events.READER_OPENED, (data) => this.startSession(data?.bookId ?? data?.id));
@@ -92,11 +95,11 @@ export const StatisticsManager = {
             // Démarrer l'auto-sauvegarde
             this._startAutosave();
             
-            console.log(`📖 Reading session started for book ${bookId}`);
+            logger.info(`Reading session started for book ${bookId}`);
             EventBus.emit(Events.SESSION_RESUMED, { bookId });
             
         } catch (error) {
-            console.error('Failed to start reading session:', error);
+            logger.error('Failed to start reading session', error);
         }
     },
     
@@ -120,7 +123,7 @@ export const StatisticsManager = {
             this._stopIdleTimer();
             this._stopAutosave();
             
-            console.log(`📕 Reading session ended for book ${currentBookId} (${currentSessionSeconds}s)`);
+            logger.info(`Reading session ended for book ${currentBookId} (${currentSessionSeconds}s)`);
             
             // Réinitialiser l'état
             currentBookId = null;
@@ -131,7 +134,7 @@ export const StatisticsManager = {
             chapterSet = new Set();
             
         } catch (error) {
-            console.error('Failed to end reading session:', error);
+            logger.error('Failed to end reading session', error);
         }
     },
     
@@ -150,7 +153,7 @@ export const StatisticsManager = {
         isPaused = true;
         sessionStartTime = null;
         
-        console.log(`⏸️ Reading session paused for book ${currentBookId}`);
+        logger.info(`Reading session paused for book ${currentBookId}`);
         EventBus.emit(Events.SESSION_PAUSED, { bookId: currentBookId });
     },
     
@@ -164,7 +167,7 @@ export const StatisticsManager = {
         sessionStartTime = Date.now();
         lastActivityTime = Date.now();
         
-        console.log(`▶️ Reading session resumed for book ${currentBookId}`);
+        logger.info(`Reading session resumed for book ${currentBookId}`);
         EventBus.emit(Events.SESSION_RESUMED, { bookId: currentBookId });
     },
     
@@ -193,7 +196,7 @@ export const StatisticsManager = {
             
             return stats;
         } catch (error) {
-            console.error(`Failed to get statistics for book ${bookId}:`, error);
+            logger.error(`Failed to get statistics for book ${bookId}`, error);
             return null;
         }
     },
@@ -236,7 +239,7 @@ export const StatisticsManager = {
             };
             
         } catch (error) {
-            console.error('Failed to get global statistics:', error);
+            logger.error('Failed to get global statistics', error);
             return null;
         }
     },
@@ -303,7 +306,7 @@ export const StatisticsManager = {
             await DatabaseManager.saveStatistics(bookId, updatedStats);
             EventBus.emit(Events.STATISTICS_UPDATED, { bookId });
         } catch (error) {
-            console.error('Failed to update chapter statistics:', error);
+            logger.error('Failed to update chapter statistics', error);
         }
     },
     
@@ -334,7 +337,7 @@ export const StatisticsManager = {
         
         idleTimer = setTimeout(() => {
             if (currentBookId && !isPaused) {
-                console.log('⏱️ Idle timeout - pausing session');
+                logger.info('Idle timeout - pausing session');
                 this.pauseSession();
             }
         }, IDLE_TIMEOUT);
@@ -361,7 +364,7 @@ export const StatisticsManager = {
         saveTimer = setInterval(() => {
             if (currentBookId && !isPaused) {
                 this._saveStatistics().catch(err => {
-                    console.error('Autosave failed:', err);
+                    logger.error('Autosave failed', err);
                 });
             }
         }, AUTOSAVE_INTERVAL);
@@ -433,7 +436,7 @@ export const StatisticsManager = {
             EventBus.emit(Events.STATISTICS_UPDATED, { bookId: currentBookId });
             
         } catch (error) {
-            console.error('Failed to save statistics:', error);
+            logger.error('Failed to save statistics', error);
             throw error;
         }
     }

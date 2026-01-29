@@ -10,6 +10,9 @@ import { BaseUI } from './base-ui.js';
 import { StatisticsManager } from '../core/statistics-manager.js';
 import { DatabaseManager } from '../core/database.js';
 import { EventBus, Events } from '../events/event-bus.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('StatsUI');
 
 /**
  * URL du CDN Chart.js
@@ -44,7 +47,7 @@ export class StatsUI extends BaseUI {
      * Initialise le composant
      */
     init() {
-        console.log('📊 StatsUI initialized');
+        logger.info('StatsUI initialized');
         
         // Écouter l'événement d'ouverture des stats
         EventBus.on(Events.STATS_OPEN_REQUEST, () => this.open());
@@ -64,7 +67,7 @@ export class StatsUI extends BaseUI {
             EventBus.emit(Events.UI_MODAL_OPENED, { type: 'statistics' });
             
         } catch (error) {
-            console.error('Failed to open statistics:', error);
+            logger.error('Failed to open statistics', error);
             this._showError('Erreur lors du chargement des statistiques.');
         }
     }
@@ -176,7 +179,7 @@ export class StatsUI extends BaseUI {
             }
             
         } catch (error) {
-            console.error('Failed to load statistics:', error);
+            logger.error('Failed to load statistics', error);
             this._showError('Erreur lors du chargement des statistiques.');
         }
     }
@@ -263,19 +266,19 @@ export class StatsUI extends BaseUI {
                 
                 script.onload = () => {
                     isChartJsLoaded = true;
-                    console.log('📈 Chart.js loaded successfully');
+                    logger.info('Chart.js loaded successfully');
                     resolve(true);
                 };
                 
                 script.onerror = () => {
-                    console.error('❌ Failed to load Chart.js from CDN');
+                    logger.error('Failed to load Chart.js from CDN');
                     resolve(false);
                 };
                 
                 document.head.appendChild(script);
                 
             } catch (error) {
-                console.error('Failed to load Chart.js:', error);
+                logger.error('Failed to load Chart.js', error);
                 resolve(false);
             }
         });
@@ -290,7 +293,7 @@ export class StatsUI extends BaseUI {
      */
     async _createChart(dailyActivity) {
         if (!window.Chart) {
-            console.warn('Chart.js not available');
+            logger.warn('Chart.js not available');
             return;
         }
         
@@ -386,7 +389,7 @@ export class StatsUI extends BaseUI {
             });
             
         } catch (error) {
-            console.error('Failed to create chart:', error);
+            logger.error('Failed to create chart', error);
         }
     }
 
