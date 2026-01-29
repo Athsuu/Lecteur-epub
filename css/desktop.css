@@ -1,0 +1,144 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * DESKTOP.CSS
+ * Styles spécifiques à l'interface desktop (min-width: 769px+)
+ * Barres flottantes, TOC sidebar desktop, hover states
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE - DESKTOP ENHANCEMENTS (min-width) - Mobile-First approach
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Tablette et plus (769px+) : Afficher les barres flottantes, masquer l'UI mobile */
+@media (min-width: 769px) {
+    :root {
+        --content-padding-x: 10vw;
+    }
+    
+    /* Masquer l'interface mobile */
+    .mobile-float-left,
+    .mobile-float-right,
+    .mobile-dropdown,
+    .mobile-dropdown-overlay {
+        display: none !important;
+    }
+    
+    /* Afficher les barres flottantes desktop */
+    .floating-bar {
+        display: flex;
+    }
+    
+    /* Afficher le TOC sidebar desktop */
+    .toc-sidebar {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 340px;
+        height: 100vh;
+        background: var(--toc-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid var(--border);
+        border-top-right-radius: 24px;
+        border-bottom-right-radius: 24px;
+        transform: translateX(-100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1100;
+    }
+    
+    .toc-sidebar.open {
+        transform: translateX(0);
+        box-shadow: 8px 0 40px var(--toc-shadow);
+    }
+    
+    .toc-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: var(--toc-overlay);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s;
+        z-index: 1050;
+    }
+    
+    .toc-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+    
+    /* Réajuster le contenu desktop */
+    .reader-content {
+        margin: 0;
+        height: 100vh;
+    }
+    
+    #viewer {
+        padding: 60px var(--content-padding-x);
+    }
+    
+    /* Hover states pour desktop */
+    .toc-item:hover {
+        background: var(--bg-hover);
+        color: var(--text);
+        border-left-color: var(--accent);
+    }
+    
+    /* Masquer la floating-bar-left quand TOC est ouverte */
+    .reader-view.toc-active .floating-bar-left {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(-20px);
+    }
+    
+    /* Progress bar en bas */
+    .progress-bar {
+        bottom: 0;
+    }
+    
+    /* Progress indicator centré */
+    .progress-indicator {
+        bottom: 80px;
+    }
+    
+    /* Status message centré en bas */
+    .status-message {
+        bottom: 24px;
+    }
+}
+
+/* Grand écran (1024px+) */
+@media (min-width: 1024px) {
+    :root {
+        --content-padding-x: 12vw;
+    }
+    
+    .floating-title {
+        max-width: 320px;
+    }
+    
+    /* Bouton favori plus grand sur desktop pour meilleure accessibilité */
+    .book-favorite-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .book-favorite-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* Très grand écran (1400px+) */
+@media (min-width: 1400px) {
+    :root {
+        --content-padding-x: 15vw;
+    }
+    
+    .floating-title {
+        max-width: 400px;
+    }
+}

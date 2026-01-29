@@ -1,0 +1,706 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * MOBILE.CSS
+ * Styles spécifiques à l'interface mobile (default, mobile-first)
+ * Boutons flottants, dropdowns, barre de bibliothèque mobile
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE : Boutons flottants minimalistes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Conteneur boutons gauche (réglages + sommaire) */
+.mobile-float-left {
+    position: fixed;
+    top: calc(var(--float-btn-margin) + var(--safe-area-top));
+    left: var(--float-btn-margin);
+    display: flex;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
+/* Conteneur bouton droit (réglages + fermer) */
+.mobile-float-right {
+    position: fixed;
+    top: calc(var(--float-btn-margin) + var(--safe-area-top));
+    right: var(--float-btn-margin);
+    display: flex;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
+/* Boutons flottants */
+.float-btn {
+    width: var(--float-btn-size);
+    height: var(--float-btn-size);
+    border: none;
+    border-radius: 50%;
+    background: var(--floating-bar-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: var(--floating-bar-text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px var(--floating-bar-shadow);
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s ease;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+    /* Forcer la cliquabilité */
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 10000;
+}
+
+.float-btn:active {
+    transform: scale(0.92);
+    background: var(--floating-bar-btn-hover);
+}
+
+.float-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE : Dropdown Réglages
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mobile-dropdown {
+    position: fixed;
+    top: calc(var(--float-btn-margin) + var(--safe-area-top) + var(--float-btn-size) + 8px);
+    right: var(--float-btn-margin);
+    left: auto;
+    width: var(--dropdown-width);
+    max-width: calc(100vw - 24px);
+    background: var(--floating-bar-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px var(--floating-bar-shadow);
+    padding: 16px;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-dropdown.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+}
+
+.dropdown-section {
+    margin-bottom: 16px;
+}
+
+.dropdown-section:last-child {
+    margin-bottom: 0;
+}
+
+.dropdown-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.dropdown-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dropdown-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 10px;
+    background: var(--bg-hover);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-btn:active {
+    transform: scale(0.96);
+    background: var(--accent);
+    color: white;
+}
+
+.dropdown-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 50px;
+    text-align: center;
+}
+
+.dropdown-btn-wide {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 12px 8px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-btn-wide.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+}
+
+.dropdown-theme-btn {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-theme-btn.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--glow);
+}
+
+.dropdown-theme-btn.theme-light {
+    background: #f8f8f8;
+}
+
+.dropdown-theme-btn.theme-dark {
+    background: #1a1a2e;
+}
+
+.dropdown-theme-btn.theme-sepia {
+    background: #f4ecd8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE : Dropdown Sommaire (TOC)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mobile-dropdown-toc {
+    left: var(--float-btn-margin);
+    right: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.dropdown-toc-header {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--floating-bar-bg);
+    backdrop-filter: blur(24px);
+}
+
+.dropdown-toc-list {
+    list-style: none;
+    padding: 8px 0;
+}
+
+.dropdown-toc-list .toc-item {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.dropdown-toc-list .toc-item:active {
+    background: var(--bg-hover);
+    color: var(--text);
+    border-left-color: var(--accent);
+}
+
+/* Overlay pour fermer les dropdowns */
+.mobile-dropdown-overlay {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: 9998;
+    display: none;
+}
+
+.mobile-dropdown-overlay.active {
+    display: block;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FLOATING BARS - Masquées par défaut sur mobile (Mobile-First)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.floating-bar {
+    display: none; /* Masqué sur mobile */
+    position: fixed;
+    top: 20px;
+    background: var(--floating-bar-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 6px;
+    align-items: center;
+    gap: 6px;
+    z-index: 1200;
+    box-shadow: 0 4px 20px var(--floating-bar-shadow);
+    border: 1px solid var(--glass-border);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.floating-bar-left {
+    left: 20px;
+}
+
+.floating-bar-right {
+    right: 20px;
+}
+
+.floating-bar button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 12px;
+    background: var(--floating-bar-btn-bg);
+    color: var(--floating-bar-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    min-width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-bar button:hover {
+    background: var(--floating-bar-btn-hover);
+    transform: scale(1.05);
+}
+
+.floating-title {
+    color: var(--floating-bar-text);
+    font-weight: 600;
+    font-size: 0.9rem;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE - MOBILE SPÉCIFIQUE (max-width)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Très petit écran (480px et moins) */
+@media (max-width: 480px) {
+    :root {
+        --header-height: 52px;
+        --controls-height: 56px;
+    }
+    
+    .reader-header-btn,
+    .control-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .toc-sidebar,
+    .settings-drawer {
+        width: 100%;
+        max-width: none;
+    }
+    
+    .lib-sidebar {
+        height: calc(var(--mobile-bar-height) + var(--safe-area-bottom));
+        gap: 20px;
+    }
+    
+    .lib-main {
+        padding: 8px;
+        padding-bottom: calc(var(--mobile-bar-height) + var(--safe-area-bottom) + 16px);
+    }
+    
+    .sidebar-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1.1rem;
+    }
+    
+    .lib-books {
+        /* Force 2 colonnes fixes même sur très petit écran */
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+        padding: 8px;
+    }
+    
+    .book-cover {
+        height: 170px;
+    }
+    
+    .book-info {
+        padding: 14px;
+    }
+    
+    .book-title {
+        font-size: 0.9rem;
+    }
+    
+    .book-modal-content {
+        padding: 20px;
+        margin: 12px;
+        max-height: calc(100vh - 24px);
+    }
+    
+    .book-modal-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .book-modal-cover {
+        width: 120px;
+        height: 180px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE BIBLIOTHÈQUE MOBILE (768px et moins)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .lib-sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        width: 100%;
+        height: calc(var(--mobile-bar-height) + var(--safe-area-bottom));
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        gap: var(--mobile-icon-gap);
+        padding-top: 12px;
+        padding-bottom: var(--safe-area-bottom);
+        padding-left: 0;
+        padding-right: 0;
+        border-radius: 0;
+        border: none;
+        border-top: 1px solid var(--border);
+        background: var(--bg-secondary);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+    }
+    
+    .sidebar-icon {
+        width: var(--mobile-icon-size);
+        height: var(--mobile-icon-size);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        border-radius: 14px;
+        background: transparent;
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        background-size: 24px 24px;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .sidebar-icon-library {
+        background-image: var(--icon-library);
+    }
+
+    .sidebar-icon-favorites {
+        background-image: var(--icon-favorites);
+    }
+
+    .sidebar-icon-stats {
+        background-image: var(--icon-stats);
+    }
+
+    .sidebar-icon-settings {
+        background-image: var(--icon-settings);
+    }
+
+    .sidebar-icon.active {
+        background-color: var(--accent);
+        color: white;
+        box-shadow: 0 4px 12px var(--glow);
+        transform: scale(1.05);
+    }
+    
+    .sidebar-icon:hover {
+        background: var(--bg-hover);
+        color: var(--accent);
+    }
+    
+    .sidebar-icon[style*="margin-top"],
+    .sidebar-icon[style*="margin-left"] {
+        margin: 0 !important;
+    }
+    
+    .lib-main {
+        padding: 8px;
+        padding-bottom: calc(var(--mobile-bar-height) + var(--safe-area-bottom) + 16px);
+    }
+    
+    .lib-container {
+        padding: 10px;
+        border-radius: 14px;
+    }
+    
+    .lib-books {
+        /* Force 2 colonnes fixes côte à côte */
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .book-card {
+        min-width: 0;
+    }
+    
+    .book-cover {
+        height: 170px;
+    }
+    
+    .lib-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .lib-search-bar {
+        max-width: 100%;
+        order: 2;
+    }
+    
+    .lib-actions {
+        order: 3;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 1200px) {
+    .lib-container {
+        padding: 28px;
+        border-radius: 24px;
+    }
+    
+    .lib-books {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+/* Indicateurs visuels pour les zones de navigation en mode pagination */
+.reader-view.pagination-mode #viewer::before,
+.reader-view.pagination-mode #viewer::after {
+    content: '';
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.reader-view.pagination-mode #viewer::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg-hover), transparent);
+}
+
+.reader-view.pagination-mode #viewer::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg-hover), transparent);
+}
+
+.reader-view.pagination-mode #viewer:hover::before,
+.reader-view.pagination-mode #viewer:hover::after {
+    opacity: 0.3;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STYLES BOTTOM SHEET (SOMMAIRE MOBILE) & ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Animation pour les boutons flottants */
+.mobile-float-left, .mobile-float-right {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.mobile-float-left.hidden, .mobile-float-right.hidden {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+/* Overlay (Fond sombre) */
+.bottom-sheet-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px); /* Effet flou moderne */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+    z-index: 1000;
+    -webkit-tap-highlight-color: transparent;
+}
+.bottom-sheet-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Le panneau Bottom Sheet */
+.bottom-sheet {
+    position: fixed;
+    left: 0; bottom: 0; width: 100%;
+    background: var(--bg-secondary);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.3s ease; /* Ajout transition hauteur */
+    z-index: 1001;
+    max-height: 55vh;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border-color);
+    will-change: transform; /* Optimisation GPU */
+    touch-action: none; /* Empêche le scroll global, géré par JS */
+}
+.bottom-sheet.active {
+    transform: translateY(0);
+}
+
+/* Agrandir le panneau quand le clavier est ouvert pour voir la liste */
+.bottom-sheet.keyboard-open {
+    max-height: 100%;
+    height: 100%;
+    border-radius: 0;
+}
+
+/* Header et Poignée */
+.bottom-sheet-handle-area {
+    width: 100%;
+    padding: 12px 0;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.bottom-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--text-muted);
+    border-radius: 2px;
+    opacity: 0.3;
+}
+.bottom-sheet-header {
+    padding: 0 24px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+/* Liste des chapitres */
+.bottom-sheet-content {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0;
+    flex: 1;
+    touch-action: pan-y; /* Réactive le scroll vertical pour le contenu */
+}
+.sheet-toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    padding-bottom: 80px; /* Espace pour le scroll */
+}
+/* Plus d'espace en bas quand le clavier est ouvert pour pouvoir scroller tout le contenu au-dessus du clavier */
+.bottom-sheet.keyboard-open .sheet-toc-list {
+    padding-bottom: 50vh;
+}
+.sheet-toc-item {
+    border-bottom: 1px solid var(--border-light);
+}
+.sheet-toc-link {
+    display: block;
+    padding: 16px 24px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+/* Feedback tactile (Hover/Active) */
+.sheet-toc-link:active {
+    background: var(--bg-hover);
+}
+.sheet-toc-link.active {
+    color: var(--accent);
+    font-weight: 600;
+    background: rgba(99, 102, 241, 0.1); /* Tint léger de la couleur accent */
+    border-left: 4px solid var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODE IMMERSIF (UI HIDDEN)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Transition fluide pour tous les éléments UI */
+.mobile-float-left, .mobile-float-right, .floating-bar, .progress-bar {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Quand l'UI est cachée */
+body.ui-hidden .mobile-float-left,
+body.ui-hidden .mobile-float-right,
+body.ui-hidden .floating-bar {
+    opacity: 0;
+    transform: translateY(-100%); /* Remonte vers le haut */
+    pointer-events: none; /* Désactive les clics */
+}
+
+body.ui-hidden .progress-bar {
+    opacity: 0;
+    transform: translateY(100%); /* Descend vers le bas */
+}

@@ -1,0 +1,212 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LOADER.CSS
+ * Composant de feedback visuel pour opérations longues (import EPUB, etc.)
+ * Design cohérent avec le système de thèmes (dark/light/sepia)
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* Overlay de fond */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--modal-overlay, rgba(15, 23, 42, 0.8));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.loader-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Container du loader */
+.loader-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 50px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    min-width: 320px;
+    max-width: 90vw;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.loader-overlay.active .loader-container {
+    transform: scale(1) translateY(0);
+}
+
+/* Spinner animé */
+.loader-spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 24px;
+    position: relative;
+}
+
+.loader-spinner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid var(--border-light);
+    border-top-color: var(--accent);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Texte d'étape */
+.loader-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    min-height: 28px;
+    transition: opacity 0.2s ease;
+}
+
+.loader-text.updating {
+    opacity: 0.5;
+}
+
+/* Sous-texte (description) */
+.loader-subtext {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    opacity: 0.8;
+}
+
+/* Barre de progression indéterminée (alternative au spinner) */
+.loader-progress {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 20px;
+    position: relative;
+}
+
+.loader-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, 
+        var(--accent) 0%, 
+        var(--accent-bright) 50%, 
+        var(--accent) 100%
+    );
+    border-radius: 2px;
+    animation: progress-indeterminate 1.5s ease-in-out infinite;
+    width: 40%;
+}
+
+@keyframes progress-indeterminate {
+    0% {
+        transform: translateX(-100%);
+    }
+    50% {
+        transform: translateX(250%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Animation des points de suspension */
+.loader-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% {
+        content: '';
+    }
+    40% {
+        content: '.';
+    }
+    60% {
+        content: '..';
+    }
+    80%, 100% {
+        content: '...';
+    }
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+    .loader-container {
+        padding: 30px 35px;
+        min-width: 280px;
+        border-radius: 16px;
+    }
+    
+    .loader-spinner {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 20px;
+    }
+    
+    .loader-text {
+        font-size: 1rem;
+    }
+    
+    .loader-subtext {
+        font-size: 0.85rem;
+    }
+}
+
+/* Thème sepia (override si nécessaire) */
+body.sepia-theme .loader-overlay {
+    background: rgba(244, 236, 218, 0.8);
+}
+
+/* Animation d'entrée/sortie améliorée */
+@keyframes loader-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes loader-fade-out {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+}
+
+/* État de succès (optionnel - pour feedback positif) */
+.loader-container.success .loader-spinner::before {
+    border-top-color: #10b981;
+    animation: spin 0.5s linear;
+}
+
+.loader-container.success .loader-text {
+    color: #10b981;
+}

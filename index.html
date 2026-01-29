@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Lecteur EPUB</title>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         ANTI-FOUC (Flash of Unstyled Content)
+         Script critique pour appliquer le thème AVANT le rendu de la page.
+         DOIT être exécuté en premier, avant tous les CSS et JS.
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <script>
+        (function() {
+            'use strict';
+            
+            // Récupérer la préférence stockée
+            var storedPreference = localStorage.getItem('epub_theme') || 'auto';
+            var appliedTheme = null;
+            
+            // Déterminer le thème système
+            function getSystemTheme() {
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
+                return 'light';
+            }
+            
+            // Résoudre le thème à appliquer
+            if (storedPreference === 'auto') {
+                appliedTheme = getSystemTheme();
+            } else {
+                appliedTheme = storedPreference;
+            }
+            
+            // Appliquer la classe immédiatement sur le <body>
+            // Note: On utilise <html> au lieu de <body> car <body> n'existe pas encore
+            var root = document.documentElement;
+            
+            // Supprimer toutes les classes de thème existantes
+            root.className = root.className.replace(/\b(dark-theme|sepia-theme)\b/g, '').trim();
+            
+            // Ajouter la classe du thème appliqué
+            if (appliedTheme === 'dark') {
+                root.classList.add('dark-theme');
+            } else if (appliedTheme === 'sepia') {
+                root.classList.add('sepia-theme');
+            }
+            // Note: Sidebar icons are now rendered via CSS variables (--icon-library, --icon-favorites, etc.)
+            // No manual update needed - CSS handles theme switching automatically
+            
+            // Désactiver les transitions CSS au chargement initial (anti-glitch)
+            root.style.setProperty('--transition-duration', '0s');
+            
+            // Réactiver les transitions après un court délai
+            window.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    root.style.removeProperty('--transition-duration');
+                }, 100);
+            });
+        })();
+    </script>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         PWA - Progressive Web App
+         Manifeste, thème et icônes pour installation native
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EPUB Reader">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Lecteur EPUB">
+    <meta name="msapplication-TileColor" content="#6366f1">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         FONTS
+         Inter pour l'interface, polices système en fallback
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         STYLESHEETS
+         themes.css  : Variables CSS pour les 3 thèmes (light, dark, sepia)
+         base.css    : Reset, variables et composants communs
+         mobile.css  : Styles spécifiques mobile (boutons flottants, dropdowns)
+         desktop.css : Styles spécifiques desktop (barres, hover states)
+         loader.css  : Composant de feedback visuel pour opérations longues
+         sort.css    : Composant de tri de la bibliothèque
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/desktop.css">
+    <link rel="stylesheet" href="css/components/loader.css">
+    <link rel="stylesheet" href="css/components/sort.css">
+    <link rel="stylesheet" href="css/components/stats.css">
+    <link rel="stylesheet" href="css/library.css">
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         STYLES BOTTOM SHEET (SOMMAIRE MOBILE)
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LIBRARIES
+         JSZip  : Extraction des métadonnées EPUB
+         epub.js: Moteur de lecture EPUB
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     BIBLIOTHÈQUE
+     Vue principale avec sidebar de navigation et grille de livres
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="library-view" id="libraryView">
+    
+    <!-- Sidebar latérale -->
+    <div class="lib-sidebar">
+        <div class="sidebar-icon active sidebar-icon-library" title="Bibliothèque" data-action="show-library-view" data-view="all"></div>
+        <div class="sidebar-icon sidebar-icon-favorites" title="Favoris" data-action="show-library-view" data-view="favorites"></div>
+        <div class="sidebar-icon sidebar-icon-stats" title="Statistiques" data-action="show-library-view" data-view="stats"></div>
+        <div class="sidebar-icon sidebar-icon-settings" style="margin-top: auto;" data-action="open-settings" title="Paramètres"></div>
+    </div>
+    
+    <!-- Zone principale -->
+    <div class="lib-main">
+        <div class="lib-container">
+            
+            <!-- En-tête avec titre, recherche et actions -->
+            <div class="lib-header">
+                <h1>Bibliothèque</h1>
+                <div class="lib-search-bar">
+                    <input type="text" class="search-input" placeholder="Rechercher un livre..." id="searchInput">
+                </div>
+                <div class="lib-actions">
+                    <div class="lib-sort-dropdown" id="sortDropdown">
+                        <button class="btn btn-secondary" id="sortBtn" data-action="toggle-sort-menu" title="Trier par...">
+                            <span>↕</span> Trier
+                        </button>
+                        <div class="sort-menu" id="sortMenu">
+                            <div class="sort-option" data-sort="added_desc">📅 Plus récents</div>
+                            <div class="sort-option" data-sort="added_asc">📅 Plus anciens</div>
+                            <div class="sort-option" data-sort="title_asc">📖 Titre (A→Z)</div>
+                            <div class="sort-option" data-sort="title_desc">📖 Titre (Z→A)</div>
+                            <div class="sort-option" data-sort="author_asc">✍️ Auteur (A→Z)</div>
+                            <div class="sort-option" data-sort="author_desc">✍️ Auteur (Z→A)</div>
+                            <div class="sort-option" data-sort="progress_desc">📖 En cours</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" data-action="import">+</button>
+                </div>
+            </div>
+            
+            <!-- Grille des livres -->
+            <div class="lib-books" id="booksList"></div>
+            
+        </div>
+    </div>
+    
+    <!-- Input caché pour l'import de fichiers -->
+    <input type="file" id="fileInput" accept=".epub" />
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MODALE DÉTAILS DU LIVRE
+     Affiche les informations complètes d'un livre
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="book-modal" id="bookModal">
+    <div class="book-modal-content" id="bookModalContent">
+        <!-- Contenu généré dynamiquement par UIManager -->
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     LECTEUR EPUB
+     Architecture Mobile-First - Interface épurée
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="reader-view" id="readerView">
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MOBILE : Boutons flottants minimalistes (haut de l'écran)
+         ═══════════════════════════════════════════════════════════════════════ -->
+    
+    <!-- Bouton flottant gauche : Sommaire -->
+    <div class="mobile-float-left" id="mobileFloatLeft">
+        <!-- Bouton Sommaire (ouvre dropdown) -->
+        <button class="float-btn" id="btnTocToggle" data-action="toggle-toc" title="Sommaire" aria-label="Sommaire">
+            <span>☰</span>
+        </button>
+    </div>
+    
+    <!-- Boutons flottants droite : Réglages + Fermer -->
+    <div class="mobile-float-right" id="mobileFloatRight">
+        <!-- Bouton Réglages (ouvre dropdown) -->
+        <button class="float-btn" id="btnSettingsToggle" data-action="toggle-mobile-settings" title="Réglages" aria-label="Réglages">
+            <span>⚙</span>
+        </button>
+        <button class="float-btn" data-action="close-reader" title="Fermer" aria-label="Fermer le livre">
+            <span>✕</span>
+        </button>
+    </div>
+    
+    <!-- Dropdown Réglages (apparaît sous le bouton ⚙) -->
+    <div class="mobile-dropdown" id="settingsDropdown">
+        <div class="dropdown-section">
+            <div class="dropdown-label">Taille du texte</div>
+            <div class="dropdown-row">
+                <button class="dropdown-btn" data-action="font-decrease">A−</button>
+                <span class="dropdown-value" id="dropdownFontSize">100%</span>
+                <button class="dropdown-btn" data-action="font-increase">A+</button>
+            </div>
+        </div>
+        <div class="dropdown-section">
+            <div class="dropdown-label">Mode de lecture</div>
+            <div class="dropdown-row">
+                <button class="dropdown-btn-wide" data-action="set-flow-scroll" id="dropdownFlowScroll">📜 Défilement</button>
+                <button class="dropdown-btn-wide" data-action="set-flow-paginated" id="dropdownFlowPaginated">📖 Pages</button>
+            </div>
+        </div>
+        <div class="dropdown-section">
+            <div class="dropdown-label">Thème</div>
+            <div class="dropdown-row">
+                <button class="dropdown-theme-btn theme-light" data-action="set-theme-light" title="Clair">☀️</button>
+                <button class="dropdown-theme-btn theme-dark" data-action="set-theme-dark" title="Sombre">🌙</button>
+                <button class="dropdown-theme-btn theme-sepia" data-action="set-theme-sepia" title="Sépia">📜</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overlay pour fermer les dropdowns (Restauré pour le menu paramètres) -->
+    <div class="mobile-dropdown-overlay" id="mobileDropdownOverlay"></div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         NOUVEAU SOMMAIRE MOBILE (BOTTOM SHEET)
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="bottom-sheet-overlay" id="bottomSheetOverlay" data-action="close-toc"></div>
+    <div class="bottom-sheet" id="tocBottomSheet" aria-hidden="true">
+        <div class="bottom-sheet-handle-area"><div class="bottom-sheet-handle"></div></div>
+        <div class="bottom-sheet-header" style="justify-content: center; padding: 0 24px 16px;">
+            <div style="position: relative; width: 100%; max-width: 280px;">
+                <input type="text" id="tocSearchInput" placeholder="Rechercher un chapitre..." style="width: 100%; padding: 10px 48px 10px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; outline: none; text-align: center; transition: border-color 0.2s, box-shadow 0.2s;">
+                <button id="tocSearchClear" style="position: absolute; right: 0; top: 0; height: 100%; width: 48px; background: none; border: none; color: var(--text-muted); cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.1rem; border-radius: 0 12px 12px 0;" aria-label="Effacer la recherche">✕</button>
+            </div>
+        </div>
+        <div class="bottom-sheet-content">
+            <ul class="sheet-toc-list" id="tocListMobile"></ul>
+        </div>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ZONE PRINCIPALE : Contenu du livre (plein écran)
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <main class="reader-content" id="readerContent">
+        <div id="viewer"></div>
+    </main>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         DESKTOP : Barres flottantes (masquées sur mobile)
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="floating-bar floating-bar-left" id="floatingBarLeft">
+        <button data-action="toggle-toc" title="Sommaire">☰</button>
+        <div class="floating-title" id="readerTitle">Chargement...</div>
+    </div>
+    
+    <div class="floating-bar floating-bar-right" id="floatingBarRight">
+        <button data-action="font-decrease" title="Réduire la police">A−</button>
+        <button data-action="font-increase" title="Agrandir la police">A+</button>
+        <button data-action="toggle-flow" id="flowToggleBtn" title="Mode pagination">📄</button>
+        <button data-action="toggle-theme" title="Changer le thème">🌙</button>
+        <button data-action="close-reader" title="Fermer">✕</button>
+    </div>
+    
+    <!-- Sidebar du sommaire Desktop -->
+    <aside class="toc-sidebar" id="tocSidebar">
+        <div class="toc-header">
+            <div class="toc-title">Sommaire</div>
+            <button class="toc-close" data-action="toggle-toc" aria-label="Fermer le sommaire">✕</button>
+        </div>
+        <ul class="toc-list" id="tocList">
+            <!-- Contenu généré dynamiquement par ReaderEngine -->
+        </ul>
+    </aside>
+    <div class="toc-overlay" id="tocOverlay" data-action="toggle-toc"></div>
+    
+    <!-- Barre de progression -->
+    <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MESSAGE DE STATUT
+     Notifications temporaires (import, erreurs, etc.)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="status-message" id="statusMessage"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SCRIPTS MODULES
+     Architecture modulaire avec ES Modules
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<script type="module" src="js/core/app.js"></script>
+
+</body>
+</html>

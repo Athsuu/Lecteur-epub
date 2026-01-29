@@ -1,0 +1,11 @@
+{
+  "name": "lecteur-epub",
+  "version": "1.0.0",
+  "description": "EPUB reader project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"No test suite configured\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

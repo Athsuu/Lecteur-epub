@@ -1,0 +1,302 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * TOC.CSS - Premium Table of Contents
+ * Glassmorphism + Apple Books Aesthetic
+ * Mobile (Bottom Sheet) & Desktop (Floating Panel)
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   OVERLAY (Backdrop)
+   ───────────────────────────────────────────────────────────────────────── */
+.toc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1), visibility 0s linear 0.3s;
+    z-index: 1050;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.toc-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    transition-delay: 0s;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TOC PANEL (Container)
+   ───────────────────────────────────────────────────────────────────────── */
+.toc-panel {
+    position: fixed;
+    width: 100%;
+    max-width: 100%;
+    background: var(--toc-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--toc-border, rgba(255, 255, 255, 0.3));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 1100;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease, visibility 0s linear 0.4s;
+    touch-action: pan-x;
+    will-change: transform, opacity;
+}
+
+.toc-overlay.active + .toc-panel {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    transition-delay: 0s;
+}
+
+/* Dark theme adjustments */
+:root.dark-theme .toc-panel {
+    --toc-bg: rgba(25, 25, 30, 0.95);
+    --toc-border: rgba(255, 255, 255, 0.15);
+}
+
+/* Sepia theme adjustments */
+:root.sepia-theme .toc-panel {
+    --toc-bg: rgba(254, 250, 240, 0.95);
+    --toc-border: rgba(139, 90, 43, 0.15);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   HANDLE (Mobile - Swipe indicator)
+   ───────────────────────────────────────────────────────────────────────── */
+.toc-handle {
+    width: 40px;
+    height: 5px;
+    border-radius: 10px;
+    background: var(--text-muted);
+    opacity: 0.4;
+    margin: 12px auto 0;
+    transition: opacity 0.2s ease;
+}
+
+.toc-handle:active {
+    opacity: 0.6;
+}
+
+/* Hide handle on desktop */
+@media (min-width: 769px) {
+    .toc-handle {
+        display: none;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────────────────────────────────────── */
+.toc-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.toc-header h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TOC LIST
+   ───────────────────────────────────────────────────────────────────────── */
+.toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    scroll-behavior: smooth;
+}
+
+/* Scrollbar styling */
+.toc-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.toc-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.toc-list::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.toc-list::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox scrollbar */
+.toc-list {
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+    scrollbar-width: thin;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CHAPTER ITEMS
+   ───────────────────────────────────────────────────────────────────────── */
+.chapter-item {
+    padding: 12px 20px;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+    color: var(--text-muted);
+    background: transparent;
+    position: relative;
+}
+
+.chapter-item:hover:not(.active) {
+    background: var(--bg-hover);
+    color: var(--text);
+    padding-left: 24px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ACTIVE CHAPTER - Universal Theme Support
+   ───────────────────────────────────────────────────────────────────────── */
+.chapter-item.active {
+    /* Visual indicator: Colored bar on left */
+    border-left: 4px solid var(--accent);
+    padding-left: 16px; /* Adjust padding to compensate border */
+    
+    /* Text color: Use accent to make it pop */
+    color: var(--accent);
+    font-weight: 700;
+    
+    /* Background: Subtle tint (works on dark & light) */
+    background-color: rgba(127, 127, 127, 0.1);
+}
+
+.chapter-item.active .chapter-label {
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+.chapter-item.active .chapter-title {
+    color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CHAPTER INFO LAYOUT
+   ───────────────────────────────────────────────────────────────────────── */
+.chapter-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.chapter-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.5;
+    font-weight: 500;
+    transition: opacity 0.25s ease;
+}
+
+.chapter-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.4;
+    transition: all 0.25s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE SPECIFIC (Bottom Sheet)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .toc-panel {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        max-height: 80vh;
+        border-radius: 24px 24px 0 0;
+        border-bottom: none;
+        transform: translateY(100%);
+        /* Transition is responsive to drag - will update via JS */
+        transition: transform 0.3s ease-out, opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+
+    .toc-overlay.active + .toc-panel {
+        transform: translateY(0);
+    }
+
+    .toc-header {
+        padding-top: 24px;
+    }
+
+    .chapter-item {
+        padding: 16px 20px;
+    }
+
+    .chapter-item:hover {
+        padding-left: 24px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESKTOP SPECIFIC (Floating Panel)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+    .toc-panel {
+        top: 80px;
+        bottom: 40px;
+        left: 20px;
+        right: auto;
+        width: 350px;
+        max-width: 350px;
+        border-radius: 16px;
+        transform: translateX(-50px) scale(0.95);
+    }
+
+    .toc-overlay.active + .toc-panel {
+        transform: translateX(0) scale(1);
+    }
+
+    .toc-overlay {
+        background: transparent;
+    }
+
+    .toc-overlay.active {
+        background: transparent;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ACCESSIBILITY
+   ───────────────────────────────────────────────────────────────────────── */
+.chapter-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toc-overlay,
+    .toc-panel,
+    .chapter-item,
+    .chapter-label,
+    .chapter-title {
+        transition: none !important;
+        animation: none !important;
+    }
+}
