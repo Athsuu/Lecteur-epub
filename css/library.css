@@ -103,7 +103,7 @@
 
 .book-card:hover .book-favorite-btn,
 .book-favorite-btn.active,
-.book-favorite-btn:focus {
+.book-favorite-btn:focus-visible {
     opacity: 1;
 }
 
@@ -115,6 +115,16 @@
 .book-favorite-btn.active {
     color: #FFD700; /* Gold */
     background: rgba(0, 0, 0, 0.6);
+}
+
+/* Accessibility: Focus ring only, no color change */
+.book-favorite-btn:focus {
+    outline: none;
+}
+
+.book-favorite-btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
 }
 
 .book-favorite-btn svg {

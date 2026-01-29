@@ -1197,51 +1197,66 @@ export const LibraryManager = {
      * @private
      */
     async _handleFavoriteClick(bookId, btn) {
-        // Animation immédiate (feedback utilisateur)
+        // 1. Debounce / Anti-spam
+        if (btn.dataset.processing) return;
+        btn.dataset.processing = 'true';
+
+        // 2. Immediate Visual Feedback (Optimistic UI)
+        const wasActive = btn.classList.contains('active');
+        const newState = !wasActive;
+        
+        // Toggle class immediately
+        btn.classList.toggle('active', newState);
+        btn.setAttribute('aria-label', newState ? 'Retirer des favoris' : 'Ajouter aux favoris');
+        
+        // Animation feedback
         btn.classList.add('animating');
+        setTimeout(() => btn.classList.remove('animating'), 300);
         
-        // Toggle dans la base de données
-        const result = await FavoritesManager.toggle(bookId);
+        // Remove sticky focus (fixes UI glitch on mouse click)
+        btn.blur();
         
-        if (result.success) {
-            // Mise à jour DOM ciblée
-            btn.classList.toggle('active', result.isFavorite);
-            btn.setAttribute('aria-label', result.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris');
+        try {
+            // 3. Database Operation
+            const result = await FavoritesManager.toggle(bookId);
             
-            // Message de feedback
-            UIManager.showStatus(result.isFavorite ? '⭐ Ajouté aux favoris' : 'Retiré des favoris');
-            
-            // Si on est dans la vue favoris et qu'on retire un favori, retirer la carte
-            if (this.currentView === 'favorites' && !result.isFavorite) {
-                const card = btn.closest('.book-card');
-                if (card) {
-                    const booksList = UIManager.get('booksList');
-                    card.style.transition = 'opacity 0.3s, transform 0.3s';
-                    card.style.opacity = '0';
-                    card.style.transform = 'scale(0.9)';
-                    setTimeout(() => {
-                        card.remove();
-                        // Mettre à jour le compteur
-                        const remaining = booksList.querySelectorAll('.book-card').length;
-                        this.updateTitle(remaining);
+            if (result.success) {
+                UIManager.showStatus(newState ? '⭐ Ajouté aux favoris' : 'Retiré des favoris');
+                
+                // Reconciliation (if DB state differs from optimistic state - rare)
+                if (result.isFavorite !== newState) {
+                    btn.classList.toggle('active', result.isFavorite);
+                    btn.setAttribute('aria-label', result.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris');
+                }
+                
+                // Handle removal from favorites view
+                if (this.currentView === 'favorites' && !result.isFavorite) {
+                    const card = btn.closest('.book-card');
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s, transform 0.3s';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.9)';
                         
-                        // Afficher message si plus de favoris
-                        if (remaining === 0) {
-                            booksList.innerHTML = `
-                                <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)">
-                                    <div style="font-size:4rem;margin-bottom:20px">⭐</div>
-                                    <p style="font-size:1.1rem;margin-bottom:8px">Aucun favori pour le moment</p>
-                                    <p style="font-size:0.9rem">Cliquez sur l'étoile d'un livre pour l'ajouter à vos favoris</p>
-                                </div>
-                            `;
-                        }
-                    }, 300);
+                        setTimeout(() => {
+                            card.remove();
+                            const booksList = UIManager.get('booksList');
+                            if (booksList) {
+                                const remaining = booksList.querySelectorAll('.book-card').length;
+                                this.updateTitle(remaining);
+                                if (remaining === 0) this._renderBooks([]);
+                            }
+                        }, 300);
+                    }
                 }
             }
+        } catch (error) {
+            // Revert on error
+            btn.classList.toggle('active', wasActive);
+            UIManager.showStatus('Erreur de synchronisation');
+            logger.error('Favorite toggle failed', error);
+        } finally {
+            delete btn.dataset.processing;
         }
-        
-        // Retirer l'animation
-        setTimeout(() => btn.classList.remove('animating'), 300);
     },
     
     /**
