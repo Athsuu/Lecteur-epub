@@ -11,6 +11,9 @@ import { ThemeManager } from '../core/themes.js';
 import { UIManager } from '../ui/ui-manager.js';
 import { ReaderEngine } from '../reader/reader-engine.js';
 import { EventBus } from './event-bus.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('KeyboardHandler');
 
 /**
  * Map des raccourcis clavier
@@ -181,7 +184,7 @@ export const KeyboardHandler = {
     init() {
         registerDefaultShortcuts();
         document.addEventListener('keydown', this._handleKeydown.bind(this));
-        console.log(`⌨️ KeyboardHandler initialized with ${shortcuts.size} shortcuts`);
+        logger.info(`KeyboardHandler initialized with ${shortcuts.size} shortcuts`);
     },
     
     /**

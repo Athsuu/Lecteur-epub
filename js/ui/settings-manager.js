@@ -9,6 +9,9 @@
 import { StateManager } from '../core/state.js';
 import { StorageKeys } from '../core/config.js';
 import { ThemeManager } from '../core/themes.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('SettingsManager');
 
 /**
  * Registre des sections de paramètres
@@ -47,7 +50,7 @@ export const SettingsManager = {
         this.createModal();
         this.registerDefaultSettings();
         this.bindEvents();
-        console.log('⚙️ SettingsManager initialized');
+        logger.info('SettingsManager initialized');
     },
 
     /**
@@ -86,7 +89,7 @@ export const SettingsManager = {
             section.settings = section.settings || [];
             section.settings.push(setting);
         } else {
-            console.warn(`Section "${sectionId}" not found. Create it first with registerSection()`);
+            logger.warn(`Section "${sectionId}" not found. Create it first with registerSection()`);
         }
     },
 

@@ -10,6 +10,9 @@ import { Config, StorageKeys } from '../core/config.js';
 import { StateManager } from '../core/state.js';
 import { ThemeManager } from '../core/themes.js';
 import { UIManager } from '../ui/ui-manager.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('BaseReader');
 
 /**
  * BaseReader - Classe abstraite pour les modes de lecture
@@ -62,19 +65,27 @@ export class BaseReader {
             this._onRelocated(location);
         });
         
-        console.log(`📖 ${this.name} initialized`);
+        logger.info(`${this.name} initialized`);
     }
 
     /**
      * Détruit le lecteur et nettoie les ressources
      */
-    destroy() {
+    async destroy() {
         if (this.rendition) {
+            // epub.js's destroy() handles DOM removal and internal listeners.
             this.rendition.destroy();
             this.rendition = null;
         }
+
+        // Clear the viewer container manually as a safeguard against zombie elements.
+        const viewer = UIManager.get('viewer');
+        if (viewer) {
+            viewer.innerHTML = '';
+        }
+
         this.book = null;
-        console.log(`📖 ${this.name} destroyed`);
+        logger.info(`${this.name} destroyed`);
     }
 
     /**
@@ -285,7 +296,7 @@ export class BaseReader {
         this.rendition.display(href).then(() => {
             this.applyTheme();
             this._scrollToTop();
-        }).catch(err => console.error('goToChapter error:', err));
+        }).catch(err => logger.error('goToChapter error', err));
         
         UIManager.closeTOC();
         UIManager.closeAllDropdowns();
@@ -310,7 +321,7 @@ export class BaseReader {
             this.rendition.display(href).then(() => {
                 this.applyTheme();
                 this._scrollToTop();
-            }).catch(err => console.error('Display error:', err));
+            }).catch(err => logger.error('Display error', err));
         }
     }
 
@@ -333,7 +344,7 @@ export class BaseReader {
             this.rendition.display(href).then(() => {
                 this.applyTheme();
                 this._scrollToTop();
-            }).catch(err => console.error('Display error:', err));
+            }).catch(err => logger.error('Display error', err));
         }
     }
 
@@ -435,7 +446,7 @@ export class BaseReader {
                 body.appendChild(nav);
             }
         } catch (e) {
-            console.debug('Chapter navigation injection failed:', e);
+            logger.debug('Chapter navigation injection failed', e);
         }
     }
 
@@ -527,7 +538,7 @@ export class BaseReader {
                 chapterName
             });
         } catch (e) {
-            console.debug('Progress save failed:', e);
+            logger.debug('Progress save failed', e);
         }
     }
 

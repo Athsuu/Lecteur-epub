@@ -7,6 +7,9 @@
  */
 
 import { StateManager } from '../core/state.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('BaseUI');
 
 /**
  * BaseUI - Classe abstraite de base pour l'interface utilisateur
@@ -22,14 +25,14 @@ export class BaseUI {
      * Initialisation spécifique à la plateforme (à surcharger)
      */
     init() {
-        console.log(`🖥️ ${this.name} initialized`);
+        logger.info(`${this.name} initialized`);
     }
 
     /**
      * Nettoyage lors du changement de mode (à surcharger)
      */
     destroy() {
-        console.log(`🖥️ ${this.name} destroyed`);
+        logger.info(`${this.name} destroyed`);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
