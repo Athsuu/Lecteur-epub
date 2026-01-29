@@ -8,6 +8,9 @@
 
 import { MobileUI } from './mobile-ui.js';
 import { DesktopUI } from './desktop-ui.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('UIFactory');
 
 /**
  * Breakpoint pour le switch mobile/desktop
@@ -98,7 +101,7 @@ export function getUI() {
  */
 export function refreshUI() {
     if (!cachedElements) {
-        console.warn('UIFactory: No cached elements, cannot refresh');
+        logger.warn('UIFactory: No cached elements, cannot refresh');
         return null;
     }
     return createUI(cachedElements);
@@ -116,7 +119,7 @@ function _setupMediaQueryListener() {
         const currentMode = currentUI?.name === 'MobileUI' ? 'mobile' : 'desktop';
         
         if (newMode !== currentMode && cachedElements) {
-            console.log(`📱↔️🖥️ Mode change: ${currentMode} → ${newMode}`);
+            logger.info(`Mode change: ${currentMode} → ${newMode}`);
             
             // Notifier avant le changement
             document.dispatchEvent(new CustomEvent('ui:before-mode-change', {

@@ -12,6 +12,9 @@ import { FavoritesManager } from './favorites-manager.js';
 import { SearchEngine, debounce } from '../utils/search-engine.js';
 import { Sorter, SortCriteria } from '../utils/sorter.js';
 import { Virtualizer } from '../utils/virtualizer.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('Library');
 
 /**
  * Convertit un Blob en chaîne Base64
@@ -36,7 +39,7 @@ async function blobToBase64(blob) {
  */
 async function extractCover(epubBlob) {
     if (!window.ePub) {
-        console.warn('ePub library not loaded');
+        logger.warn('ePub library not loaded');
         return null;
     }
     
@@ -44,14 +47,14 @@ async function extractCover(epubBlob) {
     try {
         // Vérifier que ePub est une fonction valide
         if (typeof window.ePub !== 'function') {
-            console.error('ePub is not a function:', typeof window.ePub);
+            logger.error('ePub is not a function', typeof window.ePub);
             return null;
         }
         
         // Créer une nouvelle instance SANS options (qui causent l'erreur replaceCss)
         tempBook = window.ePub();
         if (!tempBook) {
-            console.error('Failed to create ePub instance');
+            logger.error('Failed to create ePub instance');
             return null;
         }
         
@@ -77,7 +80,7 @@ async function extractCover(epubBlob) {
                 }
             }
         } catch (e) {
-            console.debug('coverUrl() failed:', e.message);
+            logger.debug('coverUrl() failed', e.message);
         }
         
         // Méthode 2: Accéder aux ressources via le manifest
@@ -105,20 +108,20 @@ async function extractCover(epubBlob) {
                                 }
                             }
                         } catch (resourceError) {
-                            console.debug('Failed to extract cover from manifest:', resourceError.message);
+                            logger.debug('Failed to extract cover from manifest', resourceError.message);
                         }
                     }
                 }
             }
         } catch (e) {
-            console.debug('Manifest parsing failed:', e.message);
+            logger.debug('Manifest parsing failed', e.message);
         }
         
         // Pas de couverture trouvée
         return null;
         
     } catch (error) {
-        console.error('Cover extraction error:', error.message);
+        logger.error('Cover extraction error', error.message);
         return null;
     } finally {
         // Nettoyer la ressource
@@ -126,7 +129,7 @@ async function extractCover(epubBlob) {
             try {
                 tempBook.destroy();
             } catch (e) {
-                console.debug('Error destroying tempBook:', e.message);
+                logger.debug('Error destroying tempBook', e.message);
             }
         }
     }
@@ -231,7 +234,7 @@ async function parseMetadata(zip) {
         if (pubElem?.textContent) metadata.publisher = pubElem.textContent.trim();
         
     } catch (e) {
-        console.debug('Metadata extraction failed:', e);
+        logger.debug('Metadata extraction failed', e);
     }
     
     return metadata;
@@ -337,7 +340,7 @@ export const LibraryManager = {
                 // Récupérer la Promise en attente
                 const task = this._workerPendingTasks.get(fileId);
                 if (!task) {
-                    console.warn('No pending task for fileId:', fileId);
+                    logger.warn('No pending task for fileId:', fileId);
                     return;
                 }
                 
@@ -361,7 +364,7 @@ export const LibraryManager = {
             
             // Handler des erreurs du worker
             this._epubWorker.addEventListener('error', (event) => {
-                console.error('Worker error:', event.message);
+                logger.error('Worker error', event.message);
                 
                 // Rejeter toutes les tâches en attente
                 for (const [fileId, task] of this._workerPendingTasks.entries()) {
@@ -370,9 +373,9 @@ export const LibraryManager = {
                 }
             });
             
-            console.log('🔧 EPUB Parser Worker initialized');
+            logger.info('EPUB Parser Worker initialized');
         } catch (error) {
-            console.error('Failed to initialize worker:', error);
+            logger.error('Failed to initialize worker', error);
             this._epubWorker = null;
         }
     },
@@ -589,10 +592,10 @@ export const LibraryManager = {
             // Afficher les livres
             this._renderBooks(this._cachedBooks);
             
-            console.log(`📚 Loaded ${this._cachedBooks.length} books (view: ${this.currentView})`);
+            logger.info(`Loaded ${this._cachedBooks.length} books (view: ${this.currentView})`, { view: this.currentView, count: this._cachedBooks.length });
         } catch (error) {
             UIManager.showStatus('Erreur lors du chargement');
-            console.error('Library load failed:', error);
+            logger.error('Library load failed', error);
         }
     },
     
@@ -605,7 +608,7 @@ export const LibraryManager = {
         const booksList = UIManager.get('booksList');
         
         if (!booksList) {
-            console.error('Books list element not found');
+            logger.error('Books list element not found');
             return;
         }
         
@@ -1052,7 +1055,7 @@ export const LibraryManager = {
                 metadata = result.metadata;
                 coverBlob = result.coverBlob;
             } catch (workerError) {
-                console.warn('Worker parsing failed, falling back to main thread:', workerError);
+                logger.warn('Worker parsing failed, falling back to main thread', workerError);
                 
                 // Fallback: parser dans le main thread si le worker échoue
                 UIManager.showLoader('Extraction des métadonnées (fallback)');
@@ -1067,7 +1070,7 @@ export const LibraryManager = {
                     // extractCover retourne une URL base64, on la garde telle quelle
                     // (coverBlob reste null, on utilisera coverUrl)
                 } catch (coverError) {
-                    console.debug('Cover extraction failed:', coverError);
+                    logger.debug('Cover extraction failed', coverError);
                 }
             }
             
@@ -1083,7 +1086,7 @@ export const LibraryManager = {
                 try {
                     coverUrl = await extractCover(epubBlob);
                 } catch (coverError) {
-                    console.debug('Cover extraction failed:', coverError);
+                    logger.debug('Cover extraction failed', coverError);
                 }
             }
 
@@ -1123,7 +1126,7 @@ export const LibraryManager = {
         } catch (error) {
             UIManager.hideLoader();
             UIManager.showStatus('Erreur lors de l\'import');
-            console.error('Import failed:', error);
+            logger.error('Import failed', error);
         }
     },
     
@@ -1139,7 +1142,7 @@ export const LibraryManager = {
             await this.load();
         } catch (error) {
             UIManager.showStatus('Erreur lors de la suppression');
-            console.error('Delete failed:', error);
+            logger.error('Delete failed', error);
         }
     },
     
@@ -1183,7 +1186,7 @@ export const LibraryManager = {
             
         } catch (error) {
             UIManager.showStatus('Erreur lors de l\'affichage');
-            console.error('Show detail failed:', error);
+            logger.error('Show detail failed', error);
         }
     },
     
@@ -1194,51 +1197,66 @@ export const LibraryManager = {
      * @private
      */
     async _handleFavoriteClick(bookId, btn) {
-        // Animation immédiate (feedback utilisateur)
+        // 1. Debounce / Anti-spam
+        if (btn.dataset.processing) return;
+        btn.dataset.processing = 'true';
+
+        // 2. Immediate Visual Feedback (Optimistic UI)
+        const wasActive = btn.classList.contains('active');
+        const newState = !wasActive;
+        
+        // Toggle class immediately
+        btn.classList.toggle('active', newState);
+        btn.setAttribute('aria-label', newState ? 'Retirer des favoris' : 'Ajouter aux favoris');
+        
+        // Animation feedback
         btn.classList.add('animating');
+        setTimeout(() => btn.classList.remove('animating'), 300);
         
-        // Toggle dans la base de données
-        const result = await FavoritesManager.toggle(bookId);
+        // Remove sticky focus (fixes UI glitch on mouse click)
+        btn.blur();
         
-        if (result.success) {
-            // Mise à jour DOM ciblée
-            btn.classList.toggle('active', result.isFavorite);
-            btn.setAttribute('aria-label', result.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris');
+        try {
+            // 3. Database Operation
+            const result = await FavoritesManager.toggle(bookId);
             
-            // Message de feedback
-            UIManager.showStatus(result.isFavorite ? '⭐ Ajouté aux favoris' : 'Retiré des favoris');
-            
-            // Si on est dans la vue favoris et qu'on retire un favori, retirer la carte
-            if (this.currentView === 'favorites' && !result.isFavorite) {
-                const card = btn.closest('.book-card');
-                if (card) {
-                    const booksList = UIManager.get('booksList');
-                    card.style.transition = 'opacity 0.3s, transform 0.3s';
-                    card.style.opacity = '0';
-                    card.style.transform = 'scale(0.9)';
-                    setTimeout(() => {
-                        card.remove();
-                        // Mettre à jour le compteur
-                        const remaining = booksList.querySelectorAll('.book-card').length;
-                        this.updateTitle(remaining);
+            if (result.success) {
+                UIManager.showStatus(newState ? '⭐ Ajouté aux favoris' : 'Retiré des favoris');
+                
+                // Reconciliation (if DB state differs from optimistic state - rare)
+                if (result.isFavorite !== newState) {
+                    btn.classList.toggle('active', result.isFavorite);
+                    btn.setAttribute('aria-label', result.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris');
+                }
+                
+                // Handle removal from favorites view
+                if (this.currentView === 'favorites' && !result.isFavorite) {
+                    const card = btn.closest('.book-card');
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s, transform 0.3s';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.9)';
                         
-                        // Afficher message si plus de favoris
-                        if (remaining === 0) {
-                            booksList.innerHTML = `
-                                <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)">
-                                    <div style="font-size:4rem;margin-bottom:20px">⭐</div>
-                                    <p style="font-size:1.1rem;margin-bottom:8px">Aucun favori pour le moment</p>
-                                    <p style="font-size:0.9rem">Cliquez sur l'étoile d'un livre pour l'ajouter à vos favoris</p>
-                                </div>
-                            `;
-                        }
-                    }, 300);
+                        setTimeout(() => {
+                            card.remove();
+                            const booksList = UIManager.get('booksList');
+                            if (booksList) {
+                                const remaining = booksList.querySelectorAll('.book-card').length;
+                                this.updateTitle(remaining);
+                                if (remaining === 0) this._renderBooks([]);
+                            }
+                        }, 300);
+                    }
                 }
             }
+        } catch (error) {
+            // Revert on error
+            btn.classList.toggle('active', wasActive);
+            UIManager.showStatus('Erreur de synchronisation');
+            logger.error('Favorite toggle failed', error);
+        } finally {
+            delete btn.dataset.processing;
         }
-        
-        // Retirer l'animation
-        setTimeout(() => btn.classList.remove('animating'), 300);
     },
     
     /**

@@ -28,7 +28,6 @@ export class DesktopUI extends BaseUI {
         this._initKeyboardShortcuts();
         this._initFloatingBars();
         this._updateDesktopVars();
-        console.log('🖥️ Desktop UI initialized');
     }
 
     /**
@@ -44,7 +43,6 @@ export class DesktopUI extends BaseUI {
         this.closeTOC();
         
         super.destroy();
-        console.log('🖥️ Desktop UI destroyed');
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -231,14 +229,5 @@ export class DesktopUI extends BaseUI {
      * Affiche un preview au survol d'un chapitre
      * @param {string} href - URL du chapitre
      */
-    showChapterPreview(href) {
-        // Fonctionnalité optionnelle pour plus tard
-    }
-
-    /**
-     * Cache le preview
-     */
-    hideChapterPreview() {
-        // Fonctionnalité optionnelle pour plus tard
-    }
+    // preview methods removed — feature not implemented
 }

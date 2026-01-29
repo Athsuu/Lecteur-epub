@@ -20,6 +20,9 @@ import ReaderFactory, {
     getFlow,
     destroy as destroyFactory
 } from './reader-factory.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('ReaderEngine');
 
 /**
  * Instance du livre epub.js
@@ -119,7 +122,7 @@ export const ReaderEngine = {
             
         } catch (error) {
             EventBus.emit('status-message', 'Erreur lors de l\'ouverture');
-            console.error('Book open failed:', error);
+            logger.error('Book open failed', error);
         }
     },
     
@@ -136,15 +139,26 @@ export const ReaderEngine = {
         
         try {
             // Nettoyer l'ancien reader
-            destroyFactory();
-            book = null;
+            await destroyFactory();
+            if (book) {
+                book.destroy();
+                book = null;
+            }
             
             const viewer = document.getElementById('viewer');
             if (viewer) viewer.innerHTML = '';
             
             // Charger le nouveau livre
             book = window.ePub({ replacements: 'blobUrl' });
-            await book.open(epubData);
+            // Lancer l'ouverture du livre. Ne pas await ici, car nous voulons utiliser
+            // les promesses `opened` et `ready` pour un contrôle plus fin.
+            book.open(epubData);
+
+            // `book.opened` se résout lorsque les métadonnées (packaging) sont prêtes.
+            // C'est l'attente la plus importante pour corriger l'erreur `(reading 'packaging')`.
+            await book.opened;
+
+            // `book.ready` se résout lorsque tout le livre est prêt (TOC, etc.).
             await book.ready;
             
             // Partager le livre avec le factory
@@ -176,7 +190,7 @@ export const ReaderEngine = {
             
         } catch (error) {
             EventBus.emit('status-message', 'Erreur lors du chargement');
-            console.error('Book initialization failed:', error);
+            logger.error('Book initialization failed', error);
             destroyFactory();
         }
     },
@@ -366,9 +380,12 @@ export const ReaderEngine = {
     /**
      * Ferme le lecteur et retourne à la bibliothèque
      */
-    close() {
-        destroyFactory();
-        book = null;
+    async close() {
+        await destroyFactory();
+        if (book) {
+            book.destroy();
+            book = null;
+        }
         
         StateManager.resetReaderState();
         EventBus.emit(Events.READER_CLOSED);

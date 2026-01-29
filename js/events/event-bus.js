@@ -6,6 +6,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('EventBus');
+
 /**
  * Map des listeners par type d'événement
  * @private
@@ -88,7 +92,7 @@ export const EventBus = {
                     toRemove.push(id);
                 }
             } catch (error) {
-                console.error(`EventBus error in "${event}":`, error);
+                logger.error(`EventBus error in "${event}"`, error);
             }
         });
         

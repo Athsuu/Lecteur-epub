@@ -8,6 +8,9 @@
 
 import { Config, StorageKeys } from './config.js';
 import { StateManager } from './state.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('ThemeManager');
 
 /**
  * Migre l'ancien système de thème (isDarkMode boolean)
@@ -21,7 +24,7 @@ function migrateOldTheme() {
         localStorage.setItem(StorageKeys.THEME, newTheme);
         localStorage.removeItem(StorageKeys.LEGACY_DARK_MODE);
         StateManager.set('theme', newTheme);
-        console.log(`🔄 Migrated theme from isDarkMode to: ${newTheme}`);
+        logger.info(`Migrated theme from isDarkMode to: ${newTheme}`);
     }
 }
 
@@ -162,7 +165,7 @@ export const ThemeManager = {
             }
         });
         
-        console.log(`🎨 Theme initialized: ${this._storedPreference} (applied: ${this._appliedTheme})`);
+        logger.info(`Theme initialized: ${this._storedPreference} (applied: ${this._appliedTheme})`);
     },
     
     /**
@@ -196,7 +199,7 @@ export const ThemeManager = {
             }
             
             const newSystemTheme = event.matches ? 'dark' : 'light';
-            console.log(`🌙 System theme changed to: ${newSystemTheme}`);
+            logger.info(`System theme changed to: ${newSystemTheme}`);
             
             // Appliquer le nouveau thème
             this._appliedTheme = newSystemTheme;
@@ -226,7 +229,7 @@ export const ThemeManager = {
         const newPreference = cycle[nextIndex];
         
         this.set(newPreference);
-        console.log(`🎨 Theme toggled to: ${newPreference}`);
+        logger.info(`Theme toggled to: ${newPreference}`);
         return newPreference;
     },
     
@@ -237,7 +240,7 @@ export const ThemeManager = {
     set(preference) {
         const validPreferences = ['light', 'dark', 'sepia', 'auto'];
         if (!validPreferences.includes(preference)) {
-            console.warn(`Unknown theme preference: ${preference}`);
+            logger.warn(`Unknown theme preference: ${preference}`);
             return;
         }
         

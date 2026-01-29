@@ -13,6 +13,9 @@ import { ActionHandler } from './action-handler.js';
 import { GestureHandler } from './gesture-handler.js';
 import { KeyboardHandler } from './keyboard-handler.js';
 import { ReaderEngine } from '../reader/reader-engine.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('EventManager');
 
 /**
  * Gère les clics délégués via data-action
@@ -170,7 +173,7 @@ export const EventManager = {
             else ReaderEngine.nextChapter();
         });
         
-        console.log('🎯 EventManager initialized');
+        logger.info('EventManager initialized');
     },
     
     /**

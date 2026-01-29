@@ -7,6 +7,9 @@
  */
 
 import { EventBus } from './event-bus.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('GestureHandler');
 
 export const GestureHandler = {
     lastTapTime: 0,
@@ -15,7 +18,7 @@ export const GestureHandler = {
 
     init() {
         EventBus.on('reader:tap', (data) => this.handleTap(data));
-        console.log('GestureHandler: Listening to reader events');
+        logger.info('GestureHandler: Listening to reader events');
     },
 
     handleTap(data) {
@@ -24,7 +27,7 @@ export const GestureHandler = {
 
         if (timeSinceLast < this.DOUBLE_TAP_DELAY) {
             // --- DOUBLE TAP ---
-            console.log('👆👆 Double Tap detected!');
+            logger.debug('Double Tap detected');
             if (this.tapTimer) clearTimeout(this.tapTimer);
             this.lastTapTime = 0; // Reset
             
@@ -47,15 +50,15 @@ export const GestureHandler = {
 
         if (x < leftZone) {
             // Zone Gauche
-            console.log('👈 Tap Zone: Left (Prev)');
+            logger.debug('Tap Zone: Left (Prev)');
             EventBus.emit('reader:prev');
         } else if (x > rightZone) {
             // Zone Droite
-            console.log('👉 Tap Zone: Right (Next)');
+            logger.debug('Tap Zone: Right (Next)');
             EventBus.emit('reader:next');
         } else {
             // Zone Centre - Ne rien faire (seul le double-tap toggle l'UI)
-            console.log('⏺️ Tap Zone: Center (Simple tap, no action)');
+            logger.debug('Tap Zone: Center (Simple tap, no action)');
         }
     }
 };

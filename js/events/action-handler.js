@@ -13,6 +13,9 @@ import { UIManager } from '../ui/ui-manager.js';
 import { LibraryManager } from '../library/library-manager.js';
 import { ReaderEngine } from '../reader/reader-engine.js';
 import { EventBus, Events } from './event-bus.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('ActionHandler');
 
 /**
  * Map des actions disponibles
@@ -246,7 +249,7 @@ export const ActionHandler = {
      */
     init() {
         registerDefaultActions();
-        console.log(`🎯 ActionHandler initialized with ${actions.size} actions`);
+        logger.info(`ActionHandler initialized with ${actions.size} actions`);
     },
     
     /**
@@ -264,12 +267,12 @@ export const ActionHandler = {
                 action(event, target);
                 return true;
             } catch (error) {
-                console.error(`Action "${actionName}" failed:`, error);
+                logger.error(`Action "${actionName}" failed:`, error);
                 return false;
             }
         }
         
-        console.warn(`Unknown action: ${actionName}`);
+        logger.warn(`Unknown action: ${actionName}`);
         return false;
     },
     

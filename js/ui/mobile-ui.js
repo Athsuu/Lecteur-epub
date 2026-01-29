@@ -8,6 +8,9 @@
 
 import { BaseUI } from './base-ui.js';
 import { StateManager } from '../core/state.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('MobileUI');
 
 /**
  * MobileUI - Interface utilisateur mobile
@@ -30,7 +33,7 @@ export class MobileUI extends BaseUI {
         this._initAdaptiveViewport();
         this._initMobileGestures();
         this.initDropdownState();
-        console.log('📱 Mobile UI initialized');
+        logger.info('Mobile UI initialized');
     }
 
     /**
@@ -53,7 +56,7 @@ export class MobileUI extends BaseUI {
         this.closeAllDropdowns();
         
         super.destroy();
-        console.log('📱 Mobile UI destroyed');
+        logger.info('Mobile UI destroyed');
     }
 
     // ═══════════════════════════════════════════════════════════════════════

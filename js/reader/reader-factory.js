@@ -55,11 +55,6 @@ export function isPagedMode() {
 export function createReader(flow = null) {
     const mode = flow || getFlow();
     
-    // Détruire l'instance précédente
-    if (currentReader) {
-        currentReader.destroy();
-    }
-    
     // Créer la nouvelle instance
     if (mode === 'paginated') {
         currentReader = new PagedReader();
@@ -147,9 +142,9 @@ export async function toggleFlow() {
 /**
  * Nettoyage complet du factory
  */
-export function destroy() {
+export async function destroy() {
     if (currentReader) {
-        currentReader.destroy();
+        await currentReader.destroy();
         currentReader = null;
     }
     sharedBook = null;

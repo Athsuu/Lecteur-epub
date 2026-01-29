@@ -11,6 +11,9 @@ import { Config } from '../core/config.js';
 import { StateManager } from '../core/state.js';
 import { UIManager } from '../ui/ui-manager.js';
 import { EventBus } from '../events/event-bus.js';
+import Logger from '../utils/logger.js';
+
+const logger = new Logger('PagedReader');
 
 /**
  * PagedReader - Mode de lecture paginé
@@ -67,16 +70,18 @@ export class PagedReader extends BaseReader {
             this._injectChapterNavigation();
         });
 
-        // Générer les locations pour le pourcentage de progression
-        this.book.locations.generate(1600).then(() => {
-            console.log('📍 Locations générées pour le suivi de progression');
+        // Générer les locations après que le rendu initial soit affiché pour éviter les race conditions
+        this.rendition.once('displayed', () => {
+            this.book.locations.generate(1600).then(() => {
+                logger.info('Locations generated for progress tracking');
+            });
         });
     }
 
     /**
      * Détruit le lecteur et nettoie les ressources
      */
-    destroy() {
+    async destroy() {
         // Retirer les listeners d'événements
         if (this._prevHandler) {
             EventBus.off('reader:prev', this._prevHandler);
@@ -87,7 +92,7 @@ export class PagedReader extends BaseReader {
             this._nextHandler = null;
         }
         
-        super.destroy();
+        await super.destroy();
     }
 
     /**
