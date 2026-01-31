@@ -167,7 +167,7 @@
     text-overflow: ellipsis;
 }
 
-.dropdown-btn-wide.active {
+.dropdown-btn-wide.is-selected {
     border-color: var(--accent);
     background: var(--accent);
     color: white;
@@ -184,7 +184,7 @@
     transition: all 0.2s ease;
 }
 
-.dropdown-theme-btn.active {
+.dropdown-theme-btn.is-selected {
     border-color: var(--accent);
     box-shadow: 0 0 12px var(--glow);
 }
@@ -301,9 +301,11 @@
     justify-content: center;
 }
 
-.floating-bar button:hover {
-    background: var(--floating-bar-btn-hover);
-    transform: scale(1.05);
+@media (hover: hover) {
+    .floating-bar button:hover {
+        background: var(--floating-bar-btn-hover);
+        transform: scale(1.05);
+    }
 }
 
 .floating-title {
@@ -462,9 +464,11 @@
         transform: scale(1.05);
     }
     
-    .sidebar-icon:hover {
-        background: var(--bg-hover);
-        color: var(--accent);
+    @media (hover: hover) {
+        .sidebar-icon:hover {
+            background: var(--bg-hover);
+            color: var(--accent);
+        }
     }
     
     .sidebar-icon[style*="margin-top"],
@@ -549,9 +553,11 @@
     background: linear-gradient(to left, var(--bg-hover), transparent);
 }
 
-.reader-view.pagination-mode #viewer:hover::before,
-.reader-view.pagination-mode #viewer:hover::after {
-    opacity: 0.3;
+@media (hover: hover) {
+    .reader-view.pagination-mode #viewer:hover::before,
+    .reader-view.pagination-mode #viewer:hover::after {
+        opacity: 0.3;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -691,16 +697,40 @@
     transform: translateY(0);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   UI HIDDEN MODE : Mode immersif (masque tous les contrôles)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 /* Quand l'UI est cachée */
 body.ui-hidden .mobile-float-left,
 body.ui-hidden .mobile-float-right,
-body.ui-hidden .floating-bar {
-    opacity: 0;
-    transform: translateY(-100%); /* Remonte vers le haut */
-    pointer-events: none; /* Désactive les clics */
+body.ui-hidden .floating-bar,
+body.ui-hidden #floatingBarLeft,
+body.ui-hidden #floatingBarRight {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(-100%) !important;
+    transition: opacity 150ms ease, transform 150ms ease !important;
 }
 
-body.ui-hidden .progress-bar {
-    opacity: 0;
-    transform: translateY(100%); /* Descend vers le bas */
+body.ui-hidden .progress-bar,
+body.ui-hidden #progressBar {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(100%) !important;
+    transition: opacity 150ms ease, transform 150ms ease !important;
+}
+
+/* Tous les dropdowns et panneaux mobiles masqués */
+body.ui-hidden .mobile-dropdown,
+body.ui-hidden #settingsDropdown,
+body.ui-hidden .mobile-dropdown-overlay,
+body.ui-hidden #mobileDropdownOverlay,
+body.ui-hidden .bottom-sheet,
+body.ui-hidden #tocBottomSheet,
+body.ui-hidden .bottom-sheet-overlay,
+body.ui-hidden #bottomSheetOverlay {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 150ms ease !important;
 }

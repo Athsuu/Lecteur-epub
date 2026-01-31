@@ -142,3 +142,41 @@
         max-width: 400px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UI HIDDEN MODE : Mode immersif (masque tous les contrôles desktop)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 769px) {
+    body.ui-hidden .floating-bar,
+    body.ui-hidden #floatingBarLeft,
+    body.ui-hidden #floatingBarRight {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateY(-100%) !important;
+        transition: opacity 150ms ease, transform 150ms ease !important;
+    }
+
+    body.ui-hidden .toc-sidebar,
+    body.ui-hidden #tocSidebar {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateX(-100%) !important;
+        transition: opacity 150ms ease, transform 150ms ease !important;
+    }
+
+    body.ui-hidden .toc-overlay,
+    body.ui-hidden #tocOverlay {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: opacity 150ms ease !important;
+    }
+
+    body.ui-hidden .progress-bar,
+    body.ui-hidden #progressBar {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateY(100%) !important;
+        transition: opacity 150ms ease, transform 150ms ease !important;
+    }
+}

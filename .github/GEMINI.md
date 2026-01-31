@@ -1,9 +1,7 @@
-# ⚡ RÈGLES PROJET LECTEUR EPUB
+# ⚡ RÈGLES PROJET LECTEUR EPUB (MASTER PROMPT)
 
 ## 1. Cartographie du Projet (Map)
 Voici la structure de référence. Respecte scrupuleusement cette logique pour tout nouveau fichier.
-
-```text
 /lecteur-epub
 ├── index.html          # Point d'entrée unique
 ├── sw.js               # Service Worker (PWA)
@@ -26,7 +24,9 @@ Voici la structure de référence. Respecte scrupuleusement cette logique pour t
     └── reader/         # MOTEUR DE LECTURE (Wrapper Epub.js)
         ├── reader-factory.js
         ├── paged-reader.js
-        └── scroll-reader.js
+        ├── scroll-reader.js
+    ├── utils/          # UTILITAIRES
+        ├── logger.js       # Système de log centralisé
 
 ## 2. Architecture Core (Strict)
 - **Communication** : Tout échange inter-module DOIT passer par `EventBus`. Interdiction d'appeler directement des méthodes UI depuis le Reader.
@@ -34,7 +34,7 @@ Voici la structure de référence. Respecte scrupuleusement cette logique pour t
 - **Patterns** : Utiliser `Factory` pour l'instanciation (UI/Reader) et `Singleton` pour les Managers.
 
 ## 3. Règles de Développement (Nouveaux Fichiers)
-- **Extension** : Tu es explicitement AUTORISÉE à créer de nouveaux fichiers `.js` ou `.css` si la logique le demande (ex: nouveau composant complexe).
+- **Extension** : Tu es explicitement AUTORISÉE à créer de nouveaux fichiers `.js` ou `.css` si la logique le demande.
 - **Placement** :
   - Un nouveau composant visuel ? -> `css/components/` + `js/ui/`
   - Une nouvelle logique métier ? -> `js/core/`
@@ -43,11 +43,27 @@ Voici la structure de référence. Respecte scrupuleusement cette logique pour t
 
 ## 4. UI & Styling
 - **CSS** : Ne jamais utiliser de `<style>` inline.
-- **Thèmes** : Utiliser EXCLUSIVEMENT les variables de `themes.css`.
+- **Thèmes** : Utiliser EXCLUSIVEMENT les variables de `themes.css` (ex: `var(--bg-color)`).
 - **Responsive** : Ne pas mélanger les logiques. Le code Mobile reste dans `mobile-ui.js` et `mobile.css`.
+- **Accessibilité** : Tout élément interactif doit avoir un `aria-label` et être navigable au clavier.
 
 ## 5. Performance & Maintenance
 - **Rendu** : Utiliser `requestAnimationFrame` pour les animations. Ne jamais manipuler `top/left` (utiliser `transform`).
 - **Listes** : Utiliser la virtualisation (`Virtualizer`) pour les longues listes (bibliothèque).
 - **Nettoyage** : Implémenter une méthode `destroy()` pour nettoyer les EventListeners et éviter les fuites de mémoire.
-- **Code Mort** : Supprimer le code inutile, ne pas le commenter.
+
+## 6. Conventions de Nommage & Langue
+- **CODE (JS/CSS)** : ANGLAIS OBLIGATOIRE (Variables, Fonctions, Classes).
+  - *Bon:* `toggleMenu()`, `isBookOpen`
+  - *Mauvais:* `ouvrirMenu()`, `estOuvert`
+- **CONTENU (UI/Logs)** : FRANÇAIS OBLIGATOIRE (Textes affichés, Commentaires, Logs).
+
+## 7. ANTI-HARD CODING (STRICT)
+- **Règle d'Or** : Aucune "Magic Value" n'est tolérée dans le code.
+- **Styles** : Toutes les couleurs, tailles, et espacements doivent provenir de variables CSS (`themes.css`) ou être définis dans `base.css`.
+- **Config** : Les délais, URLs, Clés API ou seuils numériques doivent être centralisés dans `js/core/config.js` ou définis comme constantes en haut de fichier (`const ANIMATION_DURATION = 300;`).
+- **Exception** : Le hard-coding n'est autorisé que s'il est techniquement IMPOSSIBLE de faire autrement (ex: contrainte spécifique d'une librairie tierce).
+
+## 8. Robustesse & Logs
+- **Erreurs** : Utiliser des blocs `try/catch` pour toutes les opérations asynchrones (File API, IndexedDB).
+- **Logging** : Ne jamais utiliser `console.log`. Utiliser `this.logger.info()` ou `this.logger.error()` via la classe `Logger`.

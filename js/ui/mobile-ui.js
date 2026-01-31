@@ -151,8 +151,8 @@ export class MobileUI extends BaseUI {
         const scrollBtn = this.elements.dropdownFlowScroll;
         const paginatedBtn = this.elements.dropdownFlowPaginated;
 
-        scrollBtn?.classList.toggle('active', flow === 'scrolled');
-        paginatedBtn?.classList.toggle('active', flow === 'paginated');
+        scrollBtn?.classList.toggle('is-selected', flow === 'scrolled');
+        paginatedBtn?.classList.toggle('is-selected', flow === 'paginated');
     }
 
     /**
@@ -168,7 +168,7 @@ export class MobileUI extends BaseUI {
                 (btn.classList.contains('theme-dark') && theme === 'dark') ||
                 (btn.classList.contains('theme-sepia') && theme === 'sepia')
             );
-            btn.classList.toggle('active', isActive);
+            btn.classList.toggle('is-selected', isActive);
         });
     }
 

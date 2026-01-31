@@ -97,4 +97,22 @@ export class ScrollReader extends BaseReader {
         // Réinjecter la navigation après chaque relocation
         this._injectChapterNavigation();
     }
+
+    /**
+     * Va au chapitre précédent
+     * Surcharge pour bloquer la navigation par gesture en mode scroll
+     * @param {boolean} isExplicit - True si appelé via le bouton de fin de chapitre
+     */
+    prevChapter(isExplicit = false) {
+        if (isExplicit) super.prevChapter();
+    }
+
+    /**
+     * Va au chapitre suivant
+     * Surcharge pour bloquer la navigation par gesture en mode scroll
+     * @param {boolean} isExplicit - True si appelé via le bouton de fin de chapitre
+     */
+    nextChapter(isExplicit = false) {
+        if (isExplicit) super.nextChapter();
+    }
 }

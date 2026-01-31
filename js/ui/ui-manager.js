@@ -13,6 +13,49 @@ import Logger from '../utils/logger.js';
 
 const logger = new Logger('UIManager');
 
+const isIOSDevice = () => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+const scrollLockState = {
+    active: false,
+    scrollY: 0
+};
+
+function lockBodyScroll() {
+    if (scrollLockState.active) return;
+    scrollLockState.scrollY = window.scrollY || window.pageYOffset || 0;
+    const body = document.body;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollLockState.scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    scrollLockState.active = true;
+}
+
+function unlockBodyScroll() {
+    if (!scrollLockState.active) return;
+    const body = document.body;
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    body.style.right = '';
+    body.style.width = '';
+    window.scrollTo(0, scrollLockState.scrollY);
+    scrollLockState.active = false;
+}
+
+function syncIOSScrollLock() {
+    if (!isIOSDevice()) return;
+    if (UIManager.hasOpenOverlays()) {
+        lockBodyScroll();
+    } else {
+        unlockBodyScroll();
+    }
+}
+
 /**
  * Cache des éléments DOM fréquemment utilisés
  * @private
@@ -108,6 +151,11 @@ export const UIManager = {
         
         // Écouter la demande de bascule d'interface (Double Tap)
         EventBus.on('ui:toggle-interface', () => this.toggleInterface());
+
+        // Tap simple au centre (provenant du contenu EPUB) :
+        // - si un panneau/overlay est ouvert -> on ferme tout
+        // - sinon -> on toggle l'interface
+        EventBus.on('ui:center-tap', () => this.handleCenterTap());
         
         // Écouter les changements de mode
         document.addEventListener('ui:mode-changed', (e) => {
@@ -162,7 +210,7 @@ export const UIManager = {
         const isHidden = document.body.classList.contains('ui-hidden');
         logger.info(`Interface ${isHidden ? 'hidden' : 'visible'}`);
     },
-    
+
     // ═══════════════════════════════════════════════════════════════════════
     // DÉLÉGATION AUX MÉTHODES DE L'UI COURANTE
     // ═══════════════════════════════════════════════════════════════════════
@@ -192,18 +240,22 @@ export const UIManager = {
     
     toggleTOC() {
         currentUIInstance?.toggleTOC();
+        syncIOSScrollLock();
     },
     
     closeTOC() {
         currentUIInstance?.closeTOC();
+        syncIOSScrollLock();
     },
     
     showModal() {
         currentUIInstance?.showModal();
+        syncIOSScrollLock();
     },
     
     closeModal() {
         currentUIInstance?.closeModal();
+        syncIOSScrollLock();
     },
     
     updateProgress(percent) {
@@ -235,6 +287,7 @@ export const UIManager = {
             if (overlay) overlay.classList.add('active');
         }
         // Si le panneau était ouvert, closeAllDropdowns() a déjà tout géré.
+        syncIOSScrollLock();
     },
     
     /**
@@ -256,7 +309,8 @@ export const UIManager = {
             sheet.classList.add('active');
             overlay.classList.add('active');
             sheet.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
+            document.documentElement.classList.add('scroll-lock');
+            document.body.classList.add('scroll-lock');
             
             // ...et on masque à nouveau les boutons flottants.
             this.get('mobileFloatLeft')?.classList.add('hidden');
@@ -272,6 +326,7 @@ export const UIManager = {
             }
         }
         // Si le panneau était ouvert, closeAllDropdowns() a déjà tout géré.
+        syncIOSScrollLock();
     },
     
     closeAllDropdowns() {
@@ -297,12 +352,15 @@ export const UIManager = {
             sheet.classList.remove('active');
             overlay.classList.remove('active');
             sheet.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
+            document.documentElement.classList.remove('scroll-lock');
+            document.body.classList.remove('scroll-lock');
         }
 
         // Réaffiche les boutons flottants
         this.get('mobileFloatLeft')?.classList.remove('hidden');
         this.get('mobileFloatRight')?.classList.remove('hidden');
+
+        syncIOSScrollLock();
     },
     
     updateDropdownFontSize() {
@@ -531,7 +589,8 @@ export const UIManager = {
             a.dataset.action = 'goto-chapter'; // Sera capturé par l'event handler global
             
             // Ajouter un effet visuel au clic
-            a.addEventListener('click', () => {
+            a.addEventListener('click', (e) => {
+                if (e.currentTarget && typeof e.currentTarget.blur === 'function') e.currentTarget.blur();
                 // Fermer tous les menus déroulants (y compris celui-ci) après un court délai
                 setTimeout(() => this.closeAllDropdowns(), 150);
             });
@@ -558,20 +617,6 @@ export const UIManager = {
             currentUIInstance.updateToc(chapters);
             return;
         }
-        
-        // Implémentation par défaut (Desktop Sidebar)
-        const tocList = this.get('tocList');
-        if (!tocList) return;
-        
-        tocList.innerHTML = '';
-        chapters.forEach(chapter => {
-            const li = document.createElement('li');
-            li.className = 'toc-item';
-            li.dataset.href = chapter.href;
-            li.textContent = chapter.label;
-            if (chapter.level > 1) li.dataset.level = chapter.level;
-            tocList.appendChild(li);
-        });
     },
     
     // ═══════════════════════════════════════════════════════════════════════
@@ -641,52 +686,6 @@ export const UIManager = {
     // ═══════════════════════════════════════════════════════════════════════
     
     /**
-     * Génère le HTML d'une carte de livre
-     * @param {Object} book - Données du livre
-     * @returns {string} HTML de la carte
-     */
-    renderBookCard(book) {
-        const coverHTML = book.coverUrl 
-            ? `<img src="${book.coverUrl}" alt="${this.escapeHtml(book.title)}" loading="lazy">`
-            : '<span class="book-cover-placeholder">📖</span>';
-        
-        const category = formatLanguage(book.language);
-        const categoryBadge = category 
-            ? `<div class="book-category">${category}</div>` 
-            : '';
-        
-        const progressText = book.lastChapter || 'Pas encore lu';
-        const progressClass = book.lastChapter ? '' : 'not-started';
-        const buttonText = this.isMobile() ? '▶' : (book.lastChapter ? 'Continuer' : 'Lire');
-        const isFavorite = book.favoritedAt !== null && book.favoritedAt !== undefined;
-        const favoriteClass = isFavorite ? 'active' : '';
-        
-        return `
-            <div class="book-cover">
-                <button class="book-favorite-btn ${favoriteClass}" data-book-id="${book.id}" aria-label="${isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                    </svg>
-                </button>
-                ${coverHTML}
-                ${categoryBadge}
-            </div>
-            <div class="book-info">
-                <div class="book-title">${this.escapeHtml(book.title)}</div>
-                <div class="book-author">${this.escapeHtml(book.author || 'Auteur inconnu')}</div>
-                <div class="book-meta">
-                    <div class="book-progress ${progressClass}">${progressText}</div>
-                    <button class="book-info-btn" data-action="book-detail" data-id="${book.id}" title="Détails">ⓘ</button>
-                </div>
-                <div class="book-actions">
-                    <button class="btn-open" aria-hidden="true">${buttonText}</button>
-                    <button class="btn-delete" data-action="delete-book" data-id="${book.id}" title="Supprimer">✕</button>
-                </div>
-            </div>
-        `;
-    },
-    
-    /**
      * Génère le HTML de la modale de détails
      * @param {Object} book - Données du livre
      * @param {number} chapterCount - Nombre de chapitres
@@ -749,5 +748,46 @@ export const UIManager = {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
+    },
+
+    /**
+     * Détecte si une UI "transitoire" est ouverte (overlays, panneaux, modales).
+     * Important : on s'appuie sur les classes CSS (source de vérité côté DOM).
+     * @returns {boolean}
+     */
+    hasOpenOverlays() {
+        // Modale détails livre
+        if (this.get('bookModal')?.classList.contains('active')) return true;
+
+        // Desktop TOC (sidebar + overlay)
+        if (this.get('tocOverlay')?.classList.contains('active')) return true;
+        if (this.get('tocSidebar')?.classList.contains('open')) return true;
+
+        // Mobile : dropdown réglages
+        if (this.get('settingsDropdown')?.classList.contains('open')) return true;
+        if (this.get('mobileDropdownOverlay')?.classList.contains('active')) return true;
+
+        // Mobile : bottom sheet TOC
+        if (this.get('tocBottomSheet')?.classList.contains('active')) return true;
+        if (this.get('bottomSheetOverlay')?.classList.contains('active')) return true;
+
+        return false;
+    },
+
+    /**
+     * Comportement "Option 1" :
+     * - s'il y a un overlay/panneau ouvert => on ferme (et on ne toggle pas)
+     * - sinon => on toggle l'interface (mode immersif)
+     */
+    handleCenterTap() {
+        if (this.hasOpenOverlays()) {
+            // Ferme tout ce qui peut se superposer
+            this.closeAllDropdowns();
+            this.closeTOC();
+            this.closeModal();
+            return;
+        }
+
+        this.toggleInterface();
+    },
 };

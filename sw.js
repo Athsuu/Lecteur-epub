@@ -5,8 +5,10 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-const CACHE_NAME = 'epub-reader-v2';
-const CACHE_VERSION = 2;
+// ⚠ IMPORTANT : incrémenter ce nom dès qu'on modifie des fichiers JS/CSS
+// pour éviter que Safari/iOS serve des fichiers en cache "mélangés" (ancien + nouveau).
+const CACHE_NAME = 'epub-reader-v3';
+const CACHE_VERSION = 3;
 
 /**
  * Ressources critiques à mettre en cache immédiatement

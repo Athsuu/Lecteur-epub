@@ -216,7 +216,15 @@ export class BaseReader {
                 'align-items': 'center !important',
                 'gap': '10px !important',
                 'transition': 'all 0.2s ease !important',
-                'box-shadow': `0 2px 8px rgba(0,0,0,${colors.shadow}) !important`
+                'box-shadow': `0 2px 8px rgba(0,0,0,${colors.shadow}) !important`,
+                'touch-action': 'manipulation !important',
+                'user-select': 'none !important',
+                '-webkit-user-select': 'none !important',
+                '-webkit-tap-highlight-color': 'transparent !important',
+                'min-height': '44px !important',
+                'appearance': 'none !important',
+                'position': 'relative !important',
+                'z-index': '100 !important'
             },
             '.chapter-nav-btn:hover': {
                 'background': `${colors.btnHover} !important`,
@@ -293,13 +301,14 @@ export class BaseReader {
             StateManager.set('currentChapterIndex', newIndex);
         }
         
-        this.rendition.display(href).then(() => {
+        // Close UI overlays before navigating
+        UIManager.closeTOC();
+        UIManager.closeAllDropdowns();
+
+        return this.rendition.display(href).then(() => {
             this.applyTheme();
             this._scrollToTop();
         }).catch(err => logger.error('goToChapter error', err));
-        
-        UIManager.closeTOC();
-        UIManager.closeAllDropdowns();
     }
 
     /**
@@ -318,7 +327,8 @@ export class BaseReader {
         
         if (href) {
             StateManager.set('currentChapterIndex', newIndex);
-            this.rendition.display(href).then(() => {
+            UIManager.closeAllDropdowns();
+            return this.rendition.display(href).then(() => {
                 this.applyTheme();
                 this._scrollToTop();
             }).catch(err => logger.error('Display error', err));
@@ -341,7 +351,8 @@ export class BaseReader {
         
         if (href) {
             StateManager.set('currentChapterIndex', newIndex);
-            this.rendition.display(href).then(() => {
+            UIManager.closeAllDropdowns();
+            return this.rendition.display(href).then(() => {
                 this.applyTheme();
                 this._scrollToTop();
             }).catch(err => logger.error('Display error', err));
@@ -372,45 +383,25 @@ export class BaseReader {
             const iframe = document.querySelector('#viewer iframe');
             if (!iframe?.contentDocument) return;
 
+            // Improve touch responsiveness on mobile Safari / iOS by
+            // disabling double-tap zoom delay and ensuring pointer events
+            try {
+                iframe.style.touchAction = 'manipulation';
+                iframe.style.webkitTapHighlightColor = 'transparent';
+                iframe.style.pointerEvents = 'auto';
+            } catch (err) {
+                // ignore if iframe styles are not writable
+            }
+
             const doc = iframe.contentDocument;
             const body = doc.body;
             if (!body) return;
 
             doc.querySelector('.chapter-navigation')?.remove();
 
-            if (!doc.getElementById('chapter-nav-style')) {
-                const style = doc.createElement('style');
-                style.id = 'chapter-nav-style';
-                style.textContent = `
-                    .chapter-navigation {
-                        margin: 28px 0 10px 0;
-                        padding: 18px 0 10px 0;
-                        border-top: 1px solid rgba(0,0,0,0.1);
-                        display: flex;
-                        gap: 14px;
-                        justify-content: space-between;
-                    }
-                    .chapter-nav-btn {
-                        flex: 1;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 10px;
-                        padding: 14px 16px;
-                        border-radius: 18px;
-                        background: rgba(240, 240, 240, 0.9);
-                        color: inherit;
-                        font-size: 0.95rem;
-                        font-weight: 600;
-                        text-decoration: none;
-                        border: 1px solid rgba(0,0,0,0.06);
-                    }
-                    .chapter-nav-btn:active {
-                        transform: scale(0.98);
-                    }
-                `;
-                doc.head.appendChild(style);
-            }
+            // Rely on the reading theme (registered via `applyTheme`) for
+            // chapter navigation styles. Injecting a <style> tag into the
+            // content document is avoided to respect project styling rules.
 
             const nav = doc.createElement('div');
             nav.className = 'chapter-navigation';
@@ -418,27 +409,77 @@ export class BaseReader {
             const hasPrev = currentIndex > 0;
             const hasNext = currentIndex < chapters.length - 1;
 
-            if (hasPrev) {
-                const btnPrev = doc.createElement('a');
-                btnPrev.className = 'chapter-nav-btn';
-                btnPrev.href = '#';
-                btnPrev.innerHTML = '<span>←</span><span>Chapitre précédent</span>';
-                btnPrev.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.prevChapter();
+            // Helper to create a chapter nav button with unified behavior
+            const createNavButton = (htmlContent, onActivate) => {
+                const btn = doc.createElement('button');
+                btn.type = 'button';
+                btn.className = 'chapter-nav-btn';
+                btn.innerHTML = htmlContent;
+
+                let startX = 0, startY = 0;
+
+                const activate = () => {
+                    if (btn.classList.contains('disabled')) return;
+                    btn.classList.add('disabled');
+                    btn.style.opacity = '0.5';
+                    btn.style.pointerEvents = 'none';
+                    try { logger.info('[ScrollReader] Navigation button activated'); } catch (e) {}
+                    onActivate.call(this, true);
+                };
+
+                // Click fallback (Robustesse iOS/Desktop)
+                btn.addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    activate();
                 });
+
+                // Pointer events (preferred)
+                btn.addEventListener('pointerdown', (ev) => {
+                    startX = ev.clientX; startY = ev.clientY;
+                    btn.classList.add('active');
+                    ev.stopPropagation();
+                });
+
+                btn.addEventListener('pointerup', (ev) => {
+                    const diffX = Math.abs(ev.clientX - startX);
+                    const diffY = Math.abs(ev.clientY - startY);
+                    btn.classList.remove('active');
+                    // Tolerance augmentée pour le tactile (10px -> 30px)
+                    if (diffX < 30 && diffY < 30) {
+                        ev.preventDefault(); ev.stopPropagation(); activate();
+                    }
+                });
+
+                btn.addEventListener('pointercancel', () => btn.classList.remove('active'));
+
+                // Touch fallback for older iOS
+                btn.addEventListener('touchstart', (ev) => {
+                    const t = ev.changedTouches[0]; startX = t.clientX; startY = t.clientY; btn.classList.add('active');
+                    ev.stopPropagation();
+                }, { passive: true });
+
+                btn.addEventListener('touchend', (ev) => {
+                    const t = ev.changedTouches[0]; const diffX = Math.abs(t.clientX - startX); const diffY = Math.abs(t.clientY - startY);
+                    btn.classList.remove('active');
+                    // Tolerance augmentée pour le tactile (10px -> 30px)
+                    if (diffX < 30 && diffY < 30) {
+                        ev.preventDefault(); ev.stopPropagation(); activate();
+                    }
+                }, { passive: false });
+
+                return btn;
+            };
+
+            if (hasPrev) {
+                const btnPrev = createNavButton('<span>←</span><span>Chapitre précédent</span>', this.prevChapter);
+                btnPrev.setAttribute('aria-label', 'Chapitre précédent');
                 nav.appendChild(btnPrev);
             }
 
             if (hasNext) {
-                const btnNext = doc.createElement('a');
-                btnNext.className = 'chapter-nav-btn';
-                btnNext.href = '#';
-                btnNext.innerHTML = '<span>Chapitre suivant</span><span>→</span>';
-                btnNext.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.nextChapter();
-                });
+                const btnNext = createNavButton('<span>Chapitre suivant</span><span>→</span>', this.nextChapter);
+                btnNext.setAttribute('aria-label', 'Chapitre suivant');
                 nav.appendChild(btnNext);
             }
 

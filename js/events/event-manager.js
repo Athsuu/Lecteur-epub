@@ -77,6 +77,11 @@ export const EventManager = {
         // Initialiser les handlers
         ActionHandler.init();
         KeyboardHandler.init();
+
+        // iOS: éviter le double déclenchement (pointerdown -> click synthétisé)
+        let lastOverlayPointerTs = 0;
+        const OVERLAY_CLICK_GUARD_MS = 450;
+        const shouldIgnoreOverlayClick = () => (Date.now() - lastOverlayPointerTs) < OVERLAY_CLICK_GUARD_MS;
         
         // Délégation globale des clics
         document.addEventListener('click', handleClick);
@@ -90,13 +95,31 @@ export const EventManager = {
         // Overlay pour fermer la TOC desktop
         const tocOverlay = UIManager.get('tocOverlay');
         if (tocOverlay) {
-            tocOverlay.addEventListener('click', (e) => ActionHandler.execute('toggle-toc', e));
+            const closeTocOverlay = (e) => UIManager.closeTOC();
+            tocOverlay.addEventListener('click', (e) => {
+                if (shouldIgnoreOverlayClick()) return;
+                closeTocOverlay(e);
+            });
+            // iOS/Safari : réagir dès le toucher (le "click" peut être retardé ou parfois absent)
+            tocOverlay.addEventListener('pointerdown', (e) => {
+                lastOverlayPointerTs = Date.now();
+                closeTocOverlay(e);
+            }, { passive: true });
         }
         
         // Overlay pour fermer les dropdowns mobile
         const dropdownOverlay = UIManager.get('mobileDropdownOverlay');
         if (dropdownOverlay) {
-            dropdownOverlay.addEventListener('click', (e) => ActionHandler.execute('close-toc', e));
+            const closeDropdownOverlay = (e) => ActionHandler.execute('close-toc', e);
+            dropdownOverlay.addEventListener('click', (e) => {
+                if (shouldIgnoreOverlayClick()) return;
+                closeDropdownOverlay(e);
+            });
+            // iOS/Safari : fermer immédiatement au toucher
+            dropdownOverlay.addEventListener('pointerdown', (e) => {
+                lastOverlayPointerTs = Date.now();
+                closeDropdownOverlay(e);
+            }, { passive: true });
             // Fermer le menu si on essaie de scroller (swipe sur l'overlay)
             dropdownOverlay.addEventListener('touchmove', (e) => ActionHandler.execute('close-toc', e), { passive: true });
         }
@@ -129,6 +152,14 @@ export const EventManager = {
                     ActionHandler.execute('close-modal', e);
                 }
             });
+
+            // iOS : même logique, mais au toucher (le click peut ne pas se déclencher)
+            const closeIfOutside = (e) => {
+                if (e.target === bookModal) {
+                    ActionHandler.execute('close-modal', e);
+                }
+            };
+            bookModal.addEventListener('pointerdown', closeIfOutside, { passive: true });
         }
         
         // ═══════════════════════════════════════════════════════════════════════

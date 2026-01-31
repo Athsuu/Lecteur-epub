@@ -119,30 +119,4 @@ export class Sorter {
         
         return sorted;
     }
-    
-    /**
-     * Retourne la description lisible du critère
-     * @param {string} criteria - Critère de tri
-     * @returns {string} Description
-     */
-    getLabel(criteria) {
-        const labels = {
-            [SortCriteria.ADDED_DESC]: 'Plus récents',
-            [SortCriteria.ADDED_ASC]: 'Plus anciens',
-            [SortCriteria.TITLE_ASC]: 'Titre (A→Z)',
-            [SortCriteria.TITLE_DESC]: 'Titre (Z→A)',
-            [SortCriteria.AUTHOR_ASC]: 'Auteur (A→Z)',
-            [SortCriteria.AUTHOR_DESC]: 'Auteur (Z→A)',
-            [SortCriteria.PROGRESS_DESC]: 'En cours',
-        };
-        return labels[criteria] || 'Trier par';
-    }
 }
-
-/**
- * Export par défaut
- */
-export default {
-    Sorter,
-    SortCriteria
-};

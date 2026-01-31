@@ -95,6 +95,25 @@ function updateFlowButton() {
  */
 export const ReaderEngine = {
     /**
+     * Flag de navigation en cours pour éviter les doubles appels (iOS Ghost Click)
+     */
+    isNavigating: false,
+
+    /**
+     * Wrapper de navigation sécurisée
+     * @param {Function} action - Action asynchrone à exécuter
+     */
+    async safeNavigation(action) {
+        if (this.isNavigating) return;
+        this.isNavigating = true;
+        try {
+            await action();
+        } finally {
+            this.isNavigating = false;
+        }
+    },
+
+    /**
      * Vérifie si le lecteur est actif
      * @returns {boolean}
      */
@@ -233,11 +252,10 @@ export const ReaderEngine = {
             let startX = 0;
             let startY = 0;
             let startTime = 0;
-            let isTouch = false;
+            let _lastTapTs = null;
 
             // 4. TOUCHSTART (Sur window + Capture)
             win.addEventListener('touchstart', (e) => {
-                isTouch = true;
                 const touch = e.changedTouches[0];
                 startX = touch.clientX;
                 startY = touch.clientY;
@@ -246,6 +264,12 @@ export const ReaderEngine = {
 
             // 5. TOUCHEND (Sur window + Capture + Tolérance Retina)
             win.addEventListener('touchend', (e) => {
+                // CONFLICT FIX: Ignorer les taps sur les éléments interactifs
+                // Empêche le ReaderEngine de voler le clic aux boutons de navigation
+                if (e.target.closest('a, button, input, select, textarea, .chapter-nav-btn')) {
+                    return;
+                }
+
                 const touch = e.changedTouches[0];
                 const diffX = Math.abs(touch.clientX - startX);
                 const diffY = Math.abs(touch.clientY - startY);
@@ -257,6 +281,8 @@ export const ReaderEngine = {
                     // IMPORTANT : preventDefault() empêche Safari de lancer le click fantôme ou le zoom
                     if (e.cancelable) e.preventDefault();
 
+                    _lastTapTs = Date.now();
+
                     EventBus.emit('reader:tap', {
                         x: touch.clientX,
                         y: touch.clientY,
@@ -264,22 +290,36 @@ export const ReaderEngine = {
                         target: e.target,
                     });
                 }
-                
-                // Bloquer le click fantôme (sécurité supplémentaire)
-                setTimeout(() => { isTouch = false; }, 500);
             }, { capture: true, passive: false });
             
-            // 6. CLICK (Desktop - Fallback)
-            doc.addEventListener('click', (e) => {
-                if (isTouch) return; // Ignorer si déclenché par le touch
+            // ===== iOS fallback : click =====
+            doc.addEventListener(
+              'click',
+              (e) => {
+                if (e.defaultPrevented) return;
+                if (e.target.closest('a, button, input, select, textarea, label, [role="button"], [contenteditable], .chapter-nav-btn')) {
+                    return;
+                }
+                // Empêche double déclenchement si touch a déjà marché
+                if (_lastTapTs && Date.now() - _lastTapTs < 400) return;
+
+                const rect = rendition.iframe.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const width = rect.width;
+
+                _lastTapTs = Date.now();
 
                 EventBus.emit('reader:tap', {
-                    x: e.clientX,
-                    y: e.clientY,
-                    width: win.innerWidth,
-                    target: e.target
+                  x,
+                  y,
+                  width,
+                  target: e.target,
+                  source: 'click'
                 });
-            });
+              },
+              true // CAPTURE → CRUCIAL sur iOS
+            );
         };
 
         // A. Enregistrer pour les futurs chapitres
@@ -313,25 +353,31 @@ export const ReaderEngine = {
      * Navigue vers un chapitre spécifique
      * @param {string} href - Lien du chapitre
      */
-    goToChapter(href) {
+    async goToChapter(href) {
         const reader = getReader();
-        reader?.goToChapter(href);
+        if (reader) {
+            await this.safeNavigation(() => reader.goToChapter(href));
+        }
     },
     
     /**
      * Va au chapitre précédent
      */
-    prevChapter() {
+    async prevChapter() {
         const reader = getReader();
-        reader?.prevChapter();
+        if (reader) {
+            await this.safeNavigation(() => reader.prevChapter());
+        }
     },
     
     /**
      * Va au chapitre suivant
      */
-    nextChapter() {
+    async nextChapter() {
         const reader = getReader();
-        reader?.nextChapter();
+        if (reader) {
+            await this.safeNavigation(() => reader.nextChapter());
+        }
     },
     
     /**

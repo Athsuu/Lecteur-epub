@@ -57,8 +57,11 @@ export const GestureHandler = {
             logger.debug('Tap Zone: Right (Next)');
             EventBus.emit('reader:next');
         } else {
-            // Zone Centre - Ne rien faire (seul le double-tap toggle l'UI)
-            logger.debug('Tap Zone: Center (Simple tap, no action)');
+            // Zone Centre - comportement "Option 1" :
+            // 1) si un panneau/overlay est ouvert -> on ferme tout
+            // 2) sinon -> on toggle l'interface (mode immersif)
+            logger.debug('Tap Zone: Center (Simple tap)');
+            EventBus.emit('ui:center-tap');
         }
     }
 };

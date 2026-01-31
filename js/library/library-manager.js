@@ -713,6 +713,7 @@ export const LibraryManager = {
                 favoriteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
+                    if (e.currentTarget && typeof e.currentTarget.blur === 'function') e.currentTarget.blur();
                     this._handleFavoriteClick(book.id, favoriteBtn);
                 }, { capture: true });
             }
@@ -840,6 +841,7 @@ export const LibraryManager = {
         menu.addEventListener('click', async (e) => {
             const btn = e.target.closest('.lib-context-item');
             if (!btn) return;
+            if (btn && typeof btn.blur === 'function') btn.blur();
             
             const action = btn.dataset.action;
             this._hideContextMenu();
@@ -923,11 +925,11 @@ export const LibraryManager = {
      */
     _generateBookCardHTML(book) {
         const coverHTML = book.coverUrl 
-            ? `<img src="${book.coverUrl}" alt="${this._escapeHtml(book.title)}" loading="lazy">`
+            ? `<img src="${book.coverUrl}" alt="${UIManager.escapeHtml(book.title)}" loading="lazy">`
             : '<span class="book-cover-placeholder">📖</span>';
         
         const isFavorite = book.favoritedAt !== null && book.favoritedAt !== undefined;
-        const favoriteClass = isFavorite ? 'active' : '';
+        const favoriteClass = isFavorite ? 'is-active' : '';
         
         // Gestion de la progression
         const hasStarted = !!book.lastCFI;
@@ -945,22 +947,17 @@ export const LibraryManager = {
                 ${coverHTML}
             </div>
             <div class="book-info">
-                <div class="book-title" title="${this._escapeHtml(book.title)}">${this._escapeHtml(book.title)}</div>
-                <div class="book-author">${this._escapeHtml(book.author || 'Auteur inconnu')}</div>
+                <div class="book-title" title="${UIManager.escapeHtml(book.title)}">${UIManager.escapeHtml(book.title)}</div>
+                <div class="book-author">${UIManager.escapeHtml(book.author || 'Auteur inconnu')}</div>
                 
                 <div class="book-progress-container">
-                    <div class="book-progress-text">${this._escapeHtml(progressText)}</div>
+                    <div class="book-progress-text">${UIManager.escapeHtml(progressText)}</div>
                     <div class="book-progress-bar">
                         <div class="book-progress-fill" style="width: ${progressPercent}%"></div>
                     </div>
                 </div>
             </div>
         `;
-    },
-
-    _escapeHtml(text) {
-        if (!text) return '';
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     },
 
     /**
@@ -1205,8 +1202,9 @@ export const LibraryManager = {
         
         if (result.success) {
             // Mise à jour DOM ciblée
-            btn.classList.toggle('active', result.isFavorite);
+            btn.classList.toggle('is-active', result.isFavorite);
             btn.setAttribute('aria-label', result.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris');
+            btn.blur(); // Prevent focus state from sticking
             
             // Message de feedback
             UIManager.showStatus(result.isFavorite ? '⭐ Ajouté aux favoris' : 'Retiré des favoris');

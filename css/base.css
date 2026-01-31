@@ -40,6 +40,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
@@ -84,8 +85,10 @@ body::after {
     border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+@media (hover: hover) {
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -112,9 +115,11 @@ body::after {
     box-shadow: 0 4px 14px var(--glow);
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px var(--glow);
+@media (hover: hover) {
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px var(--glow);
+    }
 }
 
 .btn-primary:active {
@@ -127,9 +132,11 @@ body::after {
     border: 1px solid var(--border);
 }
 
-.btn-secondary:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--accent);
+@media (hover: hover) {
+    .btn-secondary:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--accent);
+    }
 }
 
 input[type="file"] { 
@@ -204,10 +211,12 @@ input[type="file"] {
     background-image: var(--icon-settings);
 }
 
-.sidebar-icon:hover {
-    background-color: var(--bg-hover);
-    color: var(--accent);
-    transform: scale(1.05);
+@media (hover: hover) {
+    .sidebar-icon:hover {
+        background-color: var(--bg-hover);
+        color: var(--accent);
+        transform: scale(1.05);
+    }
 }
 
 .sidebar-icon.active {
@@ -407,8 +416,10 @@ input[type="file"] {
     }
 }
 
-.book-card:hover .book-cover img {
-    transform: scale(1.08);
+@media (hover: hover) {
+    .book-card:hover .book-cover img {
+        transform: scale(1.08);
+    }
 }
 
 /* Badge catégorie */
@@ -450,14 +461,16 @@ input[type="file"] {
     opacity: 0.6;
 }
 
-.book-card:hover .book-favorite-btn {
-    opacity: 1;
-}
+@media (hover: hover) {
+    .book-card:hover .book-favorite-btn {
+        opacity: 1;
+    }
 
-.book-favorite-btn:hover {
-    background: rgba(0, 0, 0, 0.6);
-    color: #ffffff;
-    transform: scale(1.1);
+    .book-favorite-btn:hover {
+        background: rgba(0, 0, 0, 0.6);
+        color: #ffffff;
+        transform: scale(1.1);
+    }
 }
 
 .book-favorite-btn:active {
@@ -470,9 +483,24 @@ input[type="file"] {
     color: #1a1a1a;
 }
 
-.book-favorite-btn.active:hover {
-    background: #f59e0b;
-    transform: scale(1.1);
+@media (hover: hover) {
+    .book-favorite-btn.active:hover {
+        background: #f59e0b;
+        transform: scale(1.1);
+    }
+}
+
+.book-favorite-btn.is-active {
+    opacity: 1;
+    background: var(--accent-bright, #fbbf24);
+    color: var(--bg, #1a1a1a);
+}
+
+@media (hover: hover) {
+    .book-favorite-btn.is-active:hover {
+        background: var(--accent-hover, #f59e0b);
+        transform: scale(1.1);
+    }
 }
 
 /* Animation de feedback */
@@ -540,10 +568,12 @@ input[type="file"] {
     transition: all 0.2s ease;
 }
 
-.book-info-btn:hover {
-    background: var(--bg-hover);
-    color: var(--accent);
-    border-color: var(--accent);
+@media (hover: hover) {
+    .book-info-btn:hover {
+        background: var(--bg-hover);
+        color: var(--accent);
+        border-color: var(--accent);
+    }
 }
 
 /* Actions du livre */
@@ -587,9 +617,11 @@ input[type="file"] {
     width: 44px;
 }
 
-.btn-delete:hover {
-    background: var(--danger-bg-hover);
-    transform: scale(1.05);
+@media (hover: hover) {
+    .btn-delete:hover {
+        background: var(--danger-bg-hover);
+        transform: scale(1.05);
+    }
 }
 
 /* Progression de lecture */
@@ -670,9 +702,11 @@ input[type="file"] {
     transition: all 0.2s ease;
 }
 
-.book-modal-close:hover {
-    background: var(--danger-bg);
-    color: var(--danger);
+@media (hover: hover) {
+    .book-modal-close:hover {
+        background: var(--danger-bg);
+        color: var(--danger);
+    }
 }
 
 .book-modal-header {
@@ -1105,9 +1139,11 @@ input[type="file"] {
     transition: all 0.2s ease;
 }
 
-.settings-close:hover {
-    background: var(--bg-tertiary);
-    color: var(--text);
+@media (hover: hover) {
+    .settings-close:hover {
+        background: var(--bg-tertiary);
+        color: var(--text);
+    }
 }
 
 .settings-body {
@@ -1328,6 +1364,32 @@ input[type="file"] {
     transition: all 0.2s ease;
 }
 
-.btn-danger:hover {
-    background: var(--danger-bg-hover);
+@media (hover: hover) {
+
+    .btn-danger:hover {
+
+        background: var(--danger-bg-hover);
+
+    }
+
+}
+
+
+
+/* Scroll-lock class for overlays on iOS */
+
+html.scroll-lock,
+
+body.scroll-lock {
+
+    overflow: hidden;
+
+    position: relative; /* Helps on some iOS versions */
+
+    height: 100%;
+
+    /* iOS / WebKit hardening */
+    touch-action: none;
+    overscroll-behavior: none;
+
 }

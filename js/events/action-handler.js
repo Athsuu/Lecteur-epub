@@ -135,7 +135,6 @@ function registerDefaultActions() {
     actions.set('close-reader', () => {
         UIManager.closeAllDropdowns();
         ReaderEngine.close();
-        EventBus.emit(Events.READER_CLOSED);
     });
     
     actions.set('prev-page', () => {
@@ -183,7 +182,6 @@ function registerDefaultActions() {
         if (!isNaN(id)) {
             UIManager.closeModal();
             ReaderEngine.open(id);
-            EventBus.emit(Events.READER_OPENED, { bookId: id });
         }
     });
     
@@ -232,11 +230,6 @@ function registerDefaultActions() {
         }
         
         EventBus.emit(Events.LIBRARY_VIEW_CHANGED, { view });
-    });
-
-    // Ouvrir directement le module de statistiques
-    actions.set('show-stats', () => {
-        EventBus.emit(Events.STATS_OPEN_REQUEST);
     });
 }
 
@@ -293,23 +286,6 @@ export const ActionHandler = {
      */
     unregister(name) {
         actions.delete(name);
-    },
-    
-    /**
-     * Vérifie si une action existe
-     * @param {string} name - Nom de l'action
-     * @returns {boolean}
-     */
-    has(name) {
-        return actions.has(name);
-    },
-    
-    /**
-     * Liste toutes les actions disponibles
-     * @returns {string[]}
-     */
-    list() {
-        return Array.from(actions.keys());
     }
 };
 
